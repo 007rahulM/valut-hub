@@ -17,8 +17,9 @@ generate shareable links, and track download activitt
 -Deployment :Vercel (frontend)+React(backed)
 
 ##Team
-- Naveen : Upload & Encryption 
--Rahul   : Download & Security 
+- Naveen : Upload & Encryption
+  
+- Rahul   : Download & Security 
 
 ##Getting Started
 
