@@ -1,14 +1,14 @@
-#VaultHub
+##VaultHub
 
 A secure file sharing platform with client-side encryption
 Built as a collbartive project
 
-#What It Does
+##What It Does
 
 ValutHub lets you upload files, encrypt them in your browser,
 generate shareable links, and track download activitt 
 
-#Tech Stack
+##Tech Stack
 
 -Frontend : React +TypeScript +Vite +Tailwind CSS
 -Backend : Express +TypeScript + Prisma
