@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model File {
+  id            String   @id @default(uuid())
+  token         String   @unique
+  originalName  String
+  storedName    String   @unique
+  mimeType      String
+  sizeBytes     Int
+  isEncrypted   Boolean  @default(false)
+  passwordHash  String?
+  iv            String?
+  salt          String?
+  expiresAt     DateTime
+  downloadCount Int      @default(0)
+  maxDownloads  Int?
+  isDeleted     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  activityLogs ActivityLog[]
+
+  @@index([token])
+  @@index([expiresAt])
+}
+
+model ActivityLog {
+  id            String   @id @default(uuid())
+  fileId        String
+  downloadedAt  DateTime @default(now())
+  ipAddress     String?
+  userAgent     String?
+  success       Boolean
+  failureReason String?
+
+  file File @relation(fields: [fileId], references: [id], onDelete: Cascade)
+}
