@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import{fetchFileMetadata} from "../lib/api";
 
 interface FileMetadata {
   originalName: string;
@@ -22,21 +23,45 @@ export function DownloadPage() {
   const { token } = useParams<{ token: string }>();
   const [file, setFile] = useState<FileMetadata | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error] = useState<string | null>(null);
+  const [error,setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    setTimeout(() => {
-      setFile({
-        originalName: "Project_Report_Final.pdf",
-        mimeType: "application/pdf",
-        sizeBytes: 1572864,
-        isEncrypted: true,
-        expiresAt: "2026-06-29T10:00:00Z",
-        downloadCount: 0,
-      });
+
+
+
+useEffect(()=>{
+  //this function loads the real file data
+  async function loadFile(){
+    //if no token in url, show error immediately
+    if(!token){
+      setError("No file token provided");
       setLoading(false);
-    }, 1000);
-  }, [token]);
+      return;
+    }
+
+    try{
+      setLoading(true); //show loading spinner
+      setError(null);  //clear any old error
+
+      //thr real api call - asks backend for file data
+      const data=await fetchFileMetadata(token);
+
+      setFile(data);   //save the real data
+      
+    }catch(err){
+      //something went wrong - show the error
+      setError(err instanceof Error ? err.message : "Failed to load file");
+
+    }finally{
+      //always stop loading , whether success or failure 
+      setLoading(false);
+    }
+  }
+  loadFile();   //run the function 
+},[token]);   //re-run if token changes
+
+
+
+
 
   // ========== LOADING STATE ==========
 if (loading) {

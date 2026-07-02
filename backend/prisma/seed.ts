@@ -4,13 +4,15 @@ async function main() {
   // Create a test file
   const file = await prisma.file.create({
     data: {
-      token: "test123",
-      originalName: "Project_Report_Final.pdf",
-      storedName: "uuid-test-file.bin",
+      token: "test12345",
+      originalName: "valuthub-test-file-v4.pdf",
+      storedName: "uuid-test-file-v4.bin",
       mimeType: "application/pdf",
       sizeBytes: 1572864,
       isEncrypted: true,
-      expiresAt: new Date("2026-12-31"),
+      downloadCount: 0,
+      maxDownloads: 10,
+      expiresAt: new Date("2026-12-21"),
       passwordHash: null,
       iv: "test-iv",
       salt: "test-salt",
@@ -22,7 +24,8 @@ async function main() {
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.log("Seed failed:");
+    console.error(e.message);
     process.exit(1);
   })
   .finally(async () => {

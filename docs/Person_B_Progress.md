@@ -73,6 +73,15 @@
   }
 
 
+
+
+
+
+
+
+
+
+
   
 ======================================================================================================
 
@@ -154,6 +163,52 @@
 | Test data | ✅ One file in database |
 | Connect frontend to backend | ❌ Not started (Day 3) |
 
-### Blockers
-- None today
+
+
+
+======================================================================================================
+
+# Person B Progress Log
+
+## 2026-07-02 (Week 1, Day 3-4)
+
+### What I Did Today
+- [x] Understood seed vs real upload (seed is temporary for testing)
+- [x] Fixed seed script to handle duplicate tokens gracefully
+- [x] Created `frontend/src/lib/api.ts` — API client to talk to backend
+- [x] Updated DownloadPage to fetch REAL data from backend (not dummy data)
+- [x] Tested: `/file/test12345` shows real database data
+- [x] Tested: `/file/wrongtoken` shows "File not found" error
+- [x] Learned: `throw` sends errors back to `catch` blocks
+- [x] Learned: `useEffect` dependency array `[token]` re-runs when URL changes
+- [x] Learned: `@unique` fields (token, storedName) can't have duplicates
+
+### What I Learned
+- **Seed scripts**: Temporary fake data for testing. Not needed once upload route works.
+- **API client pattern**: One file (`api.ts`) handles all backend communication. Components stay clean.
+- **Error flow**: `throw` in api.ts → `catch` in DownloadPage → `setError()` → user sees message
+- **Database constraints**: `@unique` means no duplicates. Must check before creating.
+- **Async/await**: `await` pauses execution. Browser stays responsive (non-blocking).
+- **Prisma `findUnique`**: Check if data exists before trying to create (prevents crashes)
+
+### Concepts Deep Dive
+- **Why `api.ts` instead of fetch everywhere?**: 
+  - URL in one place
+  - Types defined once
+  - Error handling centralized
+  - Components stay simple
+  
+- **Why `throw` instead of returning error object?**:
+  - Forces the caller to handle errors
+  - Stops execution immediately
+  - Works with `try/catch` pattern
+  
+- **Why `useEffect` with `[token]` dependency?**:
+  - Runs when component loads
+  - Re-runs when user visits different file link
+  - Without it: old file data stays on screen
+
+
+
+
 
