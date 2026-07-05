@@ -81,6 +81,10 @@ app.get("/api/file/:token",async(req,res)=>{
 });
 
 
+// If using Express
+app.get('/', (req, res) => {
+  res.send('VaultHub Backend API is running smoothly!');
+});
 
 
 
