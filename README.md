@@ -35,28 +35,6 @@ VaultHub is built around a privacy-first flow so that:
 
 ---
 
-## Prototype vision
-
-The repository also includes a UI prototype that shows the intended product experience.
-It highlights the direction of the app more than the current production-ready scope.
-
-### Prototype flow
-1. Upload a file
-2. Optionally encrypt it in the browser
-3. Generate a shareable link
-4. Recipient opens the download page
-5. Password is entered if needed
-6. Download activity is recorded
-
-### Prototype pages
-- Upload page
-- Download page
-- Activity log page
-- About page
-- Privacy page
-
----
-
 ## Features
 
 - 🔐 Client-side file encryption
@@ -87,31 +65,6 @@ It highlights the direction of the app more than the current production-ready sc
 
 ---
 
-## Repository structure
-
-```text
-backend/
-  src/
-    server.ts          # API routes and download validation
-    lib/               # Prisma client and backend helpers
-    services/          # S3 download URL logic
-  prisma/
-    schema.prisma      # File and ActivityLog models
-    seed.ts            # Development seed data
-
-frontend/
-  src/
-    App.tsx            # Router and shell
-    pages/             # Download page UI
-    lib/api.ts         # API client
-    components/        # Shared UI pieces
-
-docs/
-  Person_B_Progress.md # Development notes and progress log
-```
-
----
-
 ## How it works
 
 1. A file is uploaded from the frontend.
@@ -122,56 +75,6 @@ docs/
 6. When a recipient opens the link, the backend validates token, expiry, and download rules.
 7. If the file is encrypted, the recipient must provide the password.
 8. Each successful download is logged.
-
----
-
-## Setup
-
-### Start PostgreSQL
-
-```bash
-docker-compose up -d
-```
-
-### Install project dependencies and prepare the repo
-
-```bash
-chmod +x setup.sh
-./setup.sh
-```
-
-### Start the backend
-
-```bash
-cd backend
-npm run dev
-```
-
-### Start the frontend
-
-```bash
-cd frontend
-npm run dev
-```
-
----
-
-## Environment variables
-
-You will likely need:
-
-- `DATABASE_URL`
-- AWS credentials for S3 access
-- other values defined in `.env` or `.env.example`
-
----
-
-## UI prototype notes
-
-The included HTML prototype is a visual reference for the intended product experience.
-It shows the upload, download, activity, privacy, and about pages in a polished demo-style layout.
-
-It is useful for understanding the long-term product direction even if parts of the final implementation differ.
 
 ---
 
