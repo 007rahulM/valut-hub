@@ -1,116 +1,76 @@
 # VaultHub
 
 <div align="center">
-  <img src="https://img.shields.io/badge/VaultHub-Secure%20File%20Sharing-2563eb?style=for-the-badge&logo=files&logoColor=white" alt="VaultHub" />
-  <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
-  <img src="https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white" alt="Prisma" />
+
+![VaultHub](https://img.shields.io/badge/VaultHub-Secure%20File%20Sharing-2563eb?style=for-the-badge&logo=files&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
+
+**Secure file sharing platform with client-side encryption, expiring links, and download tracking.**
+
 </div>
 
-<br />
+---
 
-<p align="center">
-  <strong>Secure file sharing with client-side encryption, expiring links, and download tracking.</strong>
-</p>
+## Overview
 
-<p align="center">
-  <a href="#-overview">Overview</a> •
-  <a href="#-features">Features</a> •
-  <a href="#-prototype-vision">Prototype Vision</a> •
-  <a href="#-setup">Setup</a> •
-  <a href="#-how-it-works">How it Works</a>
-</p>
+VaultHub is a secure file sharing platform designed to make private file transfer simple and controlled.
+It lets users encrypt files in the browser, share them through token-based links, and manage access using expiry rules and download limits.
+
+The project includes a React + TypeScript frontend, an Express + Prisma backend, PostgreSQL for metadata storage, and AWS S3 for file delivery.
 
 ---
 
-## 🌟 Overview
+## What VaultHub solves
 
-VaultHub is a privacy-first file sharing platform built for one purpose: make sharing sensitive files simple, secure, and clean.
+Sharing sensitive files through email or generic cloud links can be risky.
+VaultHub is built around a privacy-first flow so that:
 
-Users can upload files, encrypt them in the browser, generate shareable links, and control access using expiry rules, download limits, and password-protected access. The project combines a polished product vision with a practical full-stack implementation.
-
----
-
-## 🖼️ Hero Banner / Product Mood
-
-> **VaultHub feels like a locked vault for your files — elegant on the outside, secure at the core.**
->
-> Share files with confidence, protect them with encryption, and keep control from upload to download.
+- files are encrypted before upload
+- access can be limited by time or download count
+- encrypted files can require a password
+- download attempts can be tracked
+- the share link stays simple for recipients
 
 ---
 
-## 🚀 Why VaultHub?
+## Prototype vision
 
-Most file-sharing tools optimize for convenience first and privacy second. VaultHub is built differently.
+The repository also includes a UI prototype that shows the intended product experience.
+It highlights the direction of the app more than the current production-ready scope.
 
-- 🔐 **Encryption first** — files are protected before they leave the browser
-- ⏳ **Access control** — links can expire and downloads can be limited
-- 📥 **Download visibility** — track activity and monitor file access
-- 🛡️ **Password protection** — add another layer of security for sensitive files
-- ☁️ **Storage separation** — metadata, access logic, and file delivery are handled cleanly
+### Prototype flow
+1. Upload a file
+2. Optionally encrypt it in the browser
+3. Generate a shareable link
+4. Recipient opens the download page
+5. Password is entered if needed
+6. Download activity is recorded
 
-VaultHub is designed for people sharing contracts, documents, creative assets, and other private files that should not be exposed in plain text.
-
----
-
-## ✨ Features
-
-| Feature | What it does |
-|---|---|
-| 🔐 Client-side encryption | Encrypt files locally before upload |
-| 🔗 Shareable links | Generate token-based access links |
-| ⏳ Expiring files | Set deadlines for access |
-| 📥 Download tracking | Log download attempts and usage |
-| 🛡️ Password-protected access | Require a password for encrypted files |
-| 🗄️ Metadata storage | Store file details in PostgreSQL via Prisma |
-| ☁️ File delivery | Serve downloads through AWS S3 |
-| 🧾 Dev tooling | Local setup script and Docker-based database |
+### Prototype pages
+- Upload page
+- Download page
+- Activity log page
+- About page
+- Privacy page
 
 ---
 
-## 🎨 Prototype Vision
+## Features
 
-The included prototype shows the intended experience and product direction for VaultHub.
-
-### What the prototype communicates
-- modern dark/light UI
-- drag-and-drop file upload
-- optional encryption toggle
-- password-based download flow
-- activity log dashboard
-- privacy-first storytelling
-- clean, premium interactions
-
-### What to expect in the final product
-The final implementation may use a different technical stack or evolve over time, but the core idea stays the same:
-
-> **Upload → Encrypt → Share → Download → Track**
+- 🔐 Client-side file encryption
+- 🔗 Token-based share links
+- ⏳ Expiring file access
+- 📥 Download tracking and activity logs
+- 🛡️ Password-protected download flow
+- ☁️ AWS S3-backed file delivery
+- 🗄️ PostgreSQL metadata storage via Prisma
+- 🧾 Local setup script for development
 
 ---
 
-## 🧩 Feature Cards
-
-### 🔐 Secure Uploads
-Encrypt files locally in the browser before they are shared.
-
-### 🔗 Shareable Access
-Each file gets a unique token link that can be sent to recipients.
-
-### ⏳ Time-Limited Sharing
-Set expiration rules so links do not live forever.
-
-### 📊 Download Insights
-Track who accessed files and when through activity logs.
-
-### ☁️ Reliable Storage
-Use cloud storage for file delivery while keeping metadata structured in the database.
-
-### 🛡️ Protected Downloads
-Encrypted files require the correct password before access is granted.
-
----
-
-## 🧱 Stack
+## Stack
 
 ### Implemented stack
 - **Frontend:** React, TypeScript, Vite
@@ -118,50 +78,33 @@ Encrypted files require the correct password before access is granted.
 - **Database:** PostgreSQL
 - **ORM:** Prisma
 - **Storage:** AWS S3
-- **Local setup:** Docker / Docker Compose
+- **Local development:** Docker / Docker Compose
 
-### Product / UX direction
-- responsive web interface
-- dark/light theme concept
-- upload, download, and activity screens
-- privacy-focused language
-- polished onboarding flow
+### UI prototype stack
+- HTML
+- CSS
+- JavaScript
 
 ---
 
-## 📸 Screenshots
-
-> Screenshots can be added here later when the UI is ready.
-
-For now, the prototype file in the repo serves as the visual reference for the product experience.
-
-Suggested future additions:
-- upload screen
-- encrypted upload progress
-- download screen
-- activity log page
-- privacy/about pages
-
----
-
-## 📁 Repository Structure
+## Repository structure
 
 ```text
 backend/
   src/
-    server.ts          # API routes, download checks, metadata handling
+    server.ts          # API routes and download validation
     lib/               # Prisma client and backend helpers
-    services/          # S3 download URL generation
+    services/          # S3 download URL logic
   prisma/
-    schema.prisma      # File and ActivityLog database models
-    seed.ts            # Local seed data for development
+    schema.prisma      # File and ActivityLog models
+    seed.ts            # Development seed data
 
 frontend/
   src/
-    App.tsx            # Router and page shell
+    App.tsx            # Router and shell
     pages/             # Download page UI
-    lib/api.ts         # Frontend API client
-    components/        # Shared UI components
+    lib/api.ts         # API client
+    components/        # Shared UI pieces
 
 docs/
   Person_B_Progress.md # Development notes and progress log
@@ -169,19 +112,20 @@ docs/
 
 ---
 
-## 🔄 How it Works
+## How it works
 
-1. A user uploads a file through the frontend.
-2. The file is encrypted in the browser before being sent to storage.
-3. The backend stores metadata in PostgreSQL and keeps the file in S3.
-4. A unique share link is generated for the recipient.
-5. The recipient opens the link and the backend validates token, expiry, and download limits.
-6. If the file is encrypted, the recipient enters the password before downloading.
-7. Each download attempt is logged for later review.
+1. A file is uploaded from the frontend.
+2. The file is encrypted in the browser before upload.
+3. The backend stores metadata in PostgreSQL.
+4. The actual file is stored in S3.
+5. A unique token link is created for sharing.
+6. When a recipient opens the link, the backend validates token, expiry, and download rules.
+7. If the file is encrypted, the recipient must provide the password.
+8. Each successful download is logged.
 
 ---
 
-## 🛠️ Setup
+## Setup
 
 ### Start PostgreSQL
 
@@ -189,21 +133,21 @@ docs/
 docker-compose up -d
 ```
 
-### Prepare the project
+### Install project dependencies and prepare the repo
 
 ```bash
 chmod +x setup.sh
 ./setup.sh
 ```
 
-### Run the backend
+### Start the backend
 
 ```bash
 cd backend
 npm run dev
 ```
 
-### Run the frontend
+### Start the frontend
 
 ```bash
 cd frontend
@@ -212,39 +156,32 @@ npm run dev
 
 ---
 
-## 🔧 Environment Variables
+## Environment variables
 
 You will likely need:
 
 - `DATABASE_URL`
 - AWS credentials for S3 access
-- any additional values defined in `.env` or `.env.example`
+- other values defined in `.env` or `.env.example`
 
 ---
 
-## 🖥️ UI Prototype Notes
+## UI prototype notes
 
-The HTML prototype in the repo shows the intended experience with:
+The included HTML prototype is a visual reference for the intended product experience.
+It shows the upload, download, activity, privacy, and about pages in a polished demo-style layout.
 
-- upload and download views
-- activity log page
-- about and privacy sections
-- encryption/decryption progress states
-- file metadata cards
-- password entry flow
-- responsive navigation and theme switching
-
-It acts like a product mockup for contributors and helps explain the long-term vision of VaultHub.
+It is useful for understanding the long-term product direction even if parts of the final implementation differ.
 
 ---
 
-## 🤝 Team
+## Team
 
 - **Naveen** — Upload & Encryption
 - **Rahul** — Download & Security
 
 ---
 
-## 📄 License
+## License
 
 MIT
