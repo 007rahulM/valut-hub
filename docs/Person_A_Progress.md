@@ -2,7 +2,7 @@
 
 ## 2026-07-10 (Week 1)
 
-### What I Did Today 
+### What I Did in First Week
 
 #### Completed the Frontend Handling
 
