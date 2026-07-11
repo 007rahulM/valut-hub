@@ -7,10 +7,15 @@ import { error, timeStamp } from "node:console";
 import { generateDownloadUrl } from "./services/s3Service";
 
 
+
+
 //Load the environment variables from .env file 
 dotenv.config();
 
 const app=express();
+
+//use the upload route for handling file uploads
+
 
 //middlewares: dunctions that run before the actual request handler 
 app.use(cors());     //allows us to make requests frontend to talk to backend
