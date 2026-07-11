@@ -44,6 +44,30 @@ function UploadPage() {
     }
   };
 
+    const handleUploadToServer = async () => {
+    if (!selectedFile) return;
+
+    // 1. Create a FormData object (this is how browsers send files)
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+
+    try {
+      // 2. Send it to our local backend
+      const response = await fetch("http://localhost:3000/api/upload", {
+        method: "POST",
+        body: formData, // Do NOT set Content-Type header! Browser does it automatically for FormData
+      });
+
+      const data = await response.json();
+      console.log("Server says:", data.message);
+      alert("File saved to your codebase! Check the backend/uploads folder.");
+      
+    } catch (error) {
+      console.error("Upload failed:", error);
+      alert("Failed to upload file.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-2xl mx-auto">
@@ -96,8 +120,17 @@ function UploadPage() {
               <label htmlFor="encrypt-toggle" className="ml-2 text-gray-700">
                 Encrypt File
               </label>
-            </div>          
-            </div>
+            </div>  
+            
+            {/* Upload Button */}
+            <button
+              onClick={handleUploadToServer}
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Upload to Server
+            </button>
+          </div>        
+        
         )}
       </div>
     </div>

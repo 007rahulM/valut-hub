@@ -19,3 +19,5 @@
   - Handled The Remove File Button with Sate Updating to NULL
 
   - Created Toggle Button to encrypt 
+
+  - Handled File uploaded By using Multer and storing it in local
