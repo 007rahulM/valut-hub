@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import prisma from "./lib/prisma";
 import { error, timeStamp } from "node:console";
+import {createHash} from "crypto";   //has the provided password using node.js crypto not the borowser crypto because this is backend code and we are using node.js runtime
 
 import { generateDownloadUrl } from "./services/s3Service";
 
@@ -101,7 +102,7 @@ app.get('/', (req, res) => {
 
 app.post("/api/download/:token",async(req,res)=>{
     try{
-        //get toek from url and password from request body
+        //get token from url and password from request body
         const{token}=req.params;
         const{password}=req.body;
 
@@ -148,12 +149,14 @@ app.post("/api/download/:token",async(req,res)=>{
             }
 
 
-             // has the provided password and compare 
-             const encoder = new TextEncoder();
-             const data = encoder .encode(password);
-             const hashBuffer = await crypto.subtle.digest("SHA-256",data);
-             const hashArray= Array.from(new Uint8Array(hashBuffer));
-             const providedHash = hashArray.map(b=> b.toString(16).padStart(2, "0")).join("");
+            ////  has the provided password and compare 
+            //  const encoder = new TextEncoder();
+            //  const data = encoder .encode(password);
+            //  const hashBuffer = await crypto.subtle.digest("SHA-256",data);
+            //  const hashArray= Array.from(new Uint8Array(hashBuffer));
+            //  const providedHash = hashArray.map(b=> b.toString(16).padStart(2, "0")).join("");
+    const providedHash = createHash("sha256").update(password).digest("hex");
+
 
              if(providedHash !==file.passwordHash){
                 return res.status(403).json({

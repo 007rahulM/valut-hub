@@ -46,7 +46,7 @@ app.post("/api/upload", upload.single("file"), (req, res) => {
   });
 });
 
-const PORT = 3000;
+const PORT = 3001;
 app.listen(PORT, () => {
   console.log(`Backend server running on http://localhost:${PORT}`);
 });
