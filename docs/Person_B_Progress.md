@@ -1,214 +1,28 @@
-# Person B Progress Log
-
-## 2026-06-25 (Week 1, Day 1)
-
-### What I Did Today
-
-#### 1. Project Setup
-- [x] Created React + TypeScript project with Vite (`npm create vite@latest`)
-- [x] Installed dependencies (`npm install`)
-- [x] Installed React Router (`npm install react-router-dom`)
-- [x] Attempted Tailwind CSS install (encountered issues, switched to inline styles for now)
-
-#### 2. DownloadPage Component
-- [x] Created `src/pages/DownloadPage.tsx`
-- [x] Built file metadata interface (TypeScript): originalName, mimeType, sizeBytes, isEncrypted, expiresAt, downloadCount
-- [x] Implemented `formatFileSize()` helper function (bytes → KB/MB/GB)
-- [x] Added loading state with `useState(true)` and `useEffect` with `setTimeout` to simulate API call
-- [x] Added error state handling (ready for real API errors)
-- [x] Used `useParams&lt;{ token: string }&gt;()` to read token from URL (`/file/:token`)
-- [x] Conditional rendering: loading spinner → error message → file info card
-- [x] Displayed file info: name, type, size, expiration date, encryption status, download count
-- [x] Conditionally showed password input only when `isEncrypted` is true
-- [x] Added "Download File" button (placeholder for now, no real download yet)
-- [x] Displayed token at bottom for debugging
-
-#### 3. App.tsx Router Setup
-- [x] Set up `BrowserRouter` and `Routes`
-- [x] Added route for `/file/:token` pointing to DownloadPage
-- [x] Added placeholder route for `/` (home page, waiting for Person A's UploadPage)
-
-#### 4. Styling Journey
-- [x] Started with Tailwind classes (`bg-gray-100`, `rounded-lg`, etc.)
-- [x] Hit Tailwind generation issue (classes not applying)
-- [x] Used `body { background: hotpink }` test to verify CSS file loads
-- [x] Learned about browser caching (Ctrl+Shift+R for hard refresh)
-- [x] Switched to inline `style={{}}` objects when Tailwind failed
-- [x] Built clean design with plain CSS-in-JS
-
-#### 5. Git & GitHub
-- [x] Initialized Git repository (`git init`)
-- [x] Created GitHub repository `vault-hub-lite`
-- [x] Connected local repo to GitHub (`git remote add origin ...`)
-- [x] Created `.gitignore` (node_modules, .env, dist folders)
-- [x] Created project folder structure (frontend/, backend/, docs/)
-- [x] This is my FIRST COMMIT
-
-### What I Learned
-
-#### React Concepts
-- **JSX**: Writing HTML-like code inside JavaScript files
-- **Components**: Functions that return UI (DownloadPage is a component)
-- **Props**: Not used yet, but I know they're for passing data parent→child
-- **State (`useState`)**: Data that changes and makes React re-render the page
-  - `const [file, setFile] = useState(null)` — starts as null, becomes data later
-  - `const [loading, setLoading] = useState(true)` — starts true, becomes false when data loads
-- **Effects (`useEffect`)**: Run code when something happens (like page load)
-  - Empty array `[]` means "run once when component mounts"
-  - Used `setTimeout` to simulate API delay (1 second)
-- **useParams**: React Router hook that reads URL parameters
-  - `/file/abc123` → `useParams()` gives `{ token: "abc123" }`
-- **Conditional Rendering**: Show different UI based on state
-  - `if (loading) return &lt;Spinner /&gt;`
-  - `if (error) return &lt;ErrorMessage /&gt;`
-  - Otherwise return the main page
-
-#### TypeScript Concepts
-- **Interfaces**: Define the shape of objects
-  ```typescript
-  interface FileMetadata {
-    originalName: string;   // must be text
-    sizeBytes: number;      // must be a number
-    isEncrypted: boolean;   // must be true/false
-  }
+Person B Progress Log
+Week 1 & 2: Frontend, Backend, and S3 Integration (Days 1-10)
+What I Did
+Initialized React+TS frontend with Vite/Router and built the DownloadPage UI with state management.
+Set up Express+TS backend, configured Prisma ORM with PostgreSQL via Docker.
+Built GET /api/file/:token to fetch file metadata and POST /api/download/:token to handle download requests.
+Created AWS S3 bucket, IAM user, and built s3Service.ts to generate presigned download URLs.
+Fixed S3 CORS policies, backend password hashing (switched to Node.js createHash), and AWS region mismatches.
+Successfully tested the end-to-end download flow for unencrypted files.
+What I Learned
+How the client-server model works when connecting React to Express.
+How to use Prisma ORM to safely query and update PostgreSQL.
+How AWS S3 presigned URLs allow secure, direct file downloads without exposing server credentials.
+The difference between browser-based crypto and Node.js server-side crypto.
 
 
-
-
-
-
-
-
-
-
-
-  
-======================================================================================================
-
-## 2026-06-26 (Week 1, Day 2)
-
-### What I Did Today
-- [x] Created backend folder with `npm init -y`
-- [x] Installed Express, CORS, Prisma, TypeScript dependencies
-- [x] Configured TypeScript (`tsconfig.json`) with Node.js types
-- [x] Initialized Prisma ORM (`npx prisma init`)
-- [x] Defined database schema in `prisma/schema.prisma`
-  - File model: stores file metadata (token, name, size, encryption, etc.)
-  - ActivityLog model: tracks download attempts
-  - One-to-many relationship: File → ActivityLogs
-- [x] Started PostgreSQL with Docker (`docker-compose up -d`)
-- [x] Created first migration (`npx prisma migrate dev --name init`)
-- [x] Created Prisma client singleton (`src/lib/prisma.ts`)
-- [x] Built Express server (`src/server.ts`)
-  - Health check endpoint: `GET /health`
-  - File metadata endpoint: `GET /api/file/:token`
-  - Error handling: 404 (not found), 410 (expired), 500 (server error)
-- [x] Seeded test data into database (`npx prisma db seed`)
-- [x] Added npm scripts: `dev`, `build`, `start`
-- [x] Fixed `package.json` structure (prisma seed config inside object)
-- [x] Fixed `tsconfig.json` to include Node.js types and prisma folder
-
-### What I Learned
-
-#### Backend Concepts
-- **Express.js**: Minimal web framework for Node.js
-  - `app.use()` adds middleware (runs on every request)
-  - `app.get()` defines routes for specific URLs
-  - `req` = request (what browser sends), `res` = response (what we send back)
-  - `req.params` gets URL parameters like `:token`
-- **Middleware**: Functions that process every request
-  - `cors()`: allows frontend to talk to backend (different ports)
-  - `express.json()`: parses JSON request bodies
-- **HTTP Status Codes**:
-  - 200 = OK (success)
-  - 404 = Not Found (file doesn't exist)
-  - 410 = Gone (file expired)
-  - 500 = Server Error (something broke)
-
-#### Database Concepts
-- **PostgreSQL**: Relational database (tables, rows, columns)
-- **Prisma ORM**: TypeScript-friendly database toolkit
-  - Schema-first: define tables in `.prisma` file
-  - Auto-generates TypeScript types
-  - `findUnique()`, `create()`, `update()` — no raw SQL needed
-- **Migration**: Safe way to change database structure
-  - `prisma migrate dev`: create and apply migration
-  - Tracks what changed, can roll back if needed
-- **Seed**: Add test data to database for development
-- **Singleton pattern**: Only one PrismaClient instance exists
-  - Prevents database connection pool exhaustion
-
-#### TypeScript Concepts
-- **`@types/node`**: Type definitions for Node.js built-in APIs
-  - Without this, TypeScript doesn't know `console` or `process`
-- **`"types": ["node"]`** in tsconfig: include Node.js types
-- **`"include": ["src/**/*", "prisma/**/*"]`**: tell TypeScript which files to check
-
-#### JSON Concepts
-- **Valid JSON structure**: All fields must be inside the main object
-  - My mistake: put `"prisma"` outside the closing `}`
-  - Fixed by moving it inside, before the final `}`
-
-### Current Project State
-
-| Feature | Status |
-|---------|--------|
-| DownloadPage UI | ✅ Working (frontend) |
-| React Router | ✅ Working |
-| Express server | ✅ Running on port 3001 |
-| Health endpoint | ✅ Returns `{"status":"ok"}` |
-| File API endpoint | ✅ Returns file metadata |
-| Database connection | ✅ PostgreSQL via Docker |
-| Prisma ORM | ✅ Schema defined, migrated, seeded |
-| Test data | ✅ One file in database |
-| Connect frontend to backend | ❌ Not started (Day 3) |
-
-
-
-
-======================================================================================================
-
-# Person B Progress Log
-
-## 2026-07-02 (Week 1, Day 3-4)
-
-### What I Did Today
-- [x] Understood seed vs real upload (seed is temporary for testing)
-- [x] Fixed seed script to handle duplicate tokens gracefully
-- [x] Created `frontend/src/lib/api.ts` — API client to talk to backend
-- [x] Updated DownloadPage to fetch REAL data from backend (not dummy data)
-- [x] Tested: `/file/test12345` shows real database data
-- [x] Tested: `/file/wrongtoken` shows "File not found" error
-- [x] Learned: `throw` sends errors back to `catch` blocks
-- [x] Learned: `useEffect` dependency array `[token]` re-runs when URL changes
-- [x] Learned: `@unique` fields (token, storedName) can't have duplicates
-
-### What I Learned
-- **Seed scripts**: Temporary fake data for testing. Not needed once upload route works.
-- **API client pattern**: One file (`api.ts`) handles all backend communication. Components stay clean.
-- **Error flow**: `throw` in api.ts → `catch` in DownloadPage → `setError()` → user sees message
-- **Database constraints**: `@unique` means no duplicates. Must check before creating.
-- **Async/await**: `await` pauses execution. Browser stays responsive (non-blocking).
-- **Prisma `findUnique`**: Check if data exists before trying to create (prevents crashes)
-
-### Concepts Deep Dive
-- **Why `api.ts` instead of fetch everywhere?**: 
-  - URL in one place
-  - Types defined once
-  - Error handling centralized
-  - Components stay simple
-  
-- **Why `throw` instead of returning error object?**:
-  - Forces the caller to handle errors
-  - Stops execution immediately
-  - Works with `try/catch` pattern
-  
-- **Why `useEffect` with `[token]` dependency?**:
-  - Runs when component loads
-  - Re-runs when user visits different file link
-  - Without it: old file data stays on screen
-
-
-
-
-
+Week 3: Client-Side Decryption (Days 11-14)
+What I Did
+Built the decryptFile function using the browser's Web Crypto API (AES-GCM).
+Implemented PBKDF2 key derivation (100,000 iterations) to securely convert the user's password into an AES key.
+Created the base64ToUint8Array utility to translate Base64 text from the database back into raw binary data (Uint8Array) for the Crypto API.
+Built triggerDownloadFromArrayBuffer to package the decrypted binary data into a Blob and save it to the user's computer.
+Connected the full encrypted download flow in DownloadPage (Fetch from S3 → Decrypt in Browser → Save to Disk).
+Current Status: Decryption code is fully written. End-to-end testing is paused until Person A uploads a real encrypted file.
+What I Learned
+How symmetric encryption (AES-GCM) and key derivation (PBKDF2) work under the hood in the browser.
+The critical difference between text-safe data (Base64 strings) and binary data (ArrayBuffer/Uint8Array).
+How the Web Crypto API's authentication tag protects files from being tampered with (and why fake test data throws an OperationError).

@@ -83,3 +83,43 @@ export async function triggerDownloadv2(url:string, filename:string):Promise<voi
     }
 
 }
+
+
+
+
+
+/* Trigger a browswer download from raw binary data (ArrayBuffer)
+use this for decrypted file 
+
+data- the raw file bytes (ArrayBuffer from decryptFile)
+filename - what to name the downloaded file
+mimeType - the file type (eg: application/pdf, image/png )
+
+
+*/
+
+export async function triggerDownloadFromArrayBuffer(
+    data:ArrayBuffer,
+    filename:string,
+    mimeType:string
+): Promise<void> {
+
+    //1. wrap bytes in a blob gives it a file identity
+    const blob=new Blob([data],{type:mimeType});
+
+    //2. creating  a temporary url pointing to that blob in memeory
+    const blobUrl=URL.createObjectURL(blob);
+
+    //3. creating  a hidden <a> element and set its href to the blob url 
+     const link=document.createElement("a");
+     link.href=blobUrl;
+     link.download=filename; //forces save as dialog
+     document.body.appendChild(link);
+     link.click();
+
+
+     //4. cleanup prevents memeory leak 
+     document.body.removeChild(link);
+     URL.revokeObjectURL(blobUrl);
+
+}

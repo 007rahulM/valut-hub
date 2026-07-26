@@ -1,41 +1,22 @@
+import { Link } from "react-router-dom";
+
 export function Header() {
   return (
-    <header style={{
-      background: 'white',
-      borderBottom: '1px solid #e0e0e0',
-      padding: '16px 24px'
-    }}>
-      <div style={{
-        maxWidth: '1200px',
-        margin: '0 auto',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-      }}>
-        <h1 style={{ 
-          margin: 0, 
-          fontSize: '20px', 
-          color: '#2563eb',
-          fontWeight: '700'
-        }}>
-          VaultHub Lite
+    <header className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="max-w-6xl mx-auto flex items-center justify-between">
+        <h1 className="text-xl text-blue-600 font-bold m-0">
+          VaultHub
         </h1>
-        <nav>
-          <a href="/" style={{ 
-            color: '#666', 
-            textDecoration: 'none',
-            marginRight: '20px',
-            fontSize: '14px'
-          }}>
+        <nav className="flex gap-5">
+          <Link to="/" className="text-gray-500 hover:text-gray-900 text-sm no-underline">
             Upload
-          </a>
-          <a href="/activity" style={{ 
-            color: '#666', 
-            textDecoration: 'none',
-            fontSize: '14px'
-          }}>
+          </Link>
+          <Link to="/upload" className="text-gray-500 hover:text-gray-900 text-sm no-underline">
+            Download Redirect Page
+          </Link>
+          <Link to="/activity" className="text-gray-500 hover:text-gray-900 text-sm no-underline">
             Activity Log
-          </a>
+          </Link>
         </nav>
       </div>
     </header>
