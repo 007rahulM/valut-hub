@@ -1,21 +1,83 @@
-import express from "express";
-import cors from "cors";
 import dotenv from "dotenv";
-import prisma from "./lib/prisma";
-import { error, timeStamp } from "node:console";
-import {createHash} from "crypto";   //has the provided password using node.js crypto not the borowser crypto because this is backend code and we are using node.js runtime
-
-import { generateDownloadUrl } from "./services/s3Service";
-
-
-
-
 //Load the environment variables from .env file 
 dotenv.config();
 
+import express from "express";
+import cors from "cors";
+import prisma from "./lib/prisma";
+import { error, timeStamp } from "node:console";
+import crypto from "crypto";  //for generating unique identifiers and hashing passwords
+import {createHash} from "crypto";   //has the provided password using node.js crypto not the borowser crypto because this is backend code and we are using node.js runtime
+import { generateUploadUrl, generateDownloadUrl } from "./services/s3Service";
+
+
 const app=express();
 
+app.use(cors());     //allows us to make requests frontend to talk to backend
+app.use(express.json());   //parse JSON request bodies
+
+
 //use the upload route for handling file uploads
+// POST /api/upload - Create a new upload record and get a presigned URL
+app.post("/api/upload", async (req, res) => {
+  try {
+    // 1. Get metadata from the frontend request
+    const { originalName, mimeType, sizeBytes, isEncrypted, passwordHash, iv, salt } = req.body;
+
+    // Basic validation
+    if (!originalName || !mimeType || !sizeBytes) {
+      return res.status(400).json({
+        success: false,
+        error: { code: "INVALID_INPUT", message: "Missing required file metadata" },
+      });
+    }
+
+    // 2. Generate unique identifiers
+    const token = crypto.randomUUID(); 
+    // Stored name is the actual filename in S3 (prevents collisions)
+    const storedName = `${crypto.randomUUID()}-${originalName}`; 
+
+    // 3. Calculate expiration (7 days from now)
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    // 4. Save metadata to the database using Prisma
+    const fileRecord = await prisma.file.create({
+      data: {
+        token,
+        originalName,
+        storedName,
+        mimeType,
+        sizeBytes,
+        isEncrypted: isEncrypted || false,
+        passwordHash: passwordHash || null,
+        iv: iv || null,
+        salt: salt || null,
+        expiresAt,
+      },
+    });
+
+    // 5. Generate the Presigned Upload URL from S3
+    const presignedUrl = await generateUploadUrl(storedName);
+
+    // 6. Send the response back to the frontend
+    res.json({
+      success: true,
+      data: {
+        token: fileRecord.token,
+        shareUrl: `${process.env.FRONTEND_URL || "http://localhost:5173"}/file/${fileRecord.token}`,
+        presignedUrl,
+        storedName: fileRecord.storedName,
+      },
+    });
+
+  } catch (error) {
+    console.error("Upload error:", error);
+    res.status(500).json({
+      success: false,
+      error: { code: "UPLOAD_FAILED", message: "Failed to process upload" },
+    });
+  }
+});
 
 
 //middlewares: dunctions that run before the actual request handler 
@@ -29,7 +91,7 @@ app.get("/health",(req,res)=>{
 
 //////////////////////////////////////////////
 
-          //get /api/file/:token - first endpoint 
+//get /api/file/:token - first endpoint 
 
 app.get("/api/file/:token",async(req,res)=>{
     try{

@@ -1,10 +1,74 @@
 import { useState } from "react";
 import { FileUploader } from "../components/FileUploader";
 import FileInfo from "../components/FileInfo";
+import {requestUploadUrl, uploadFileToS3} from "../lib/api"; 
 
 function UploadPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isEncrypted, setIsEncrypted] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "success" | "error">("idle");
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Simulate upload progress
+  const simulateUpload = () => {
+    setIsUploading(true);
+    setUploadProgress(0);
+    
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 10;
+      setUploadProgress(progress);
+      
+      if (progress >= 100) {
+        clearInterval(interval);
+        setTimeout(() => {
+          setIsUploading(false);
+          setUploadProgress(0);
+        }, 500);
+      }
+    }, 200); // Updates every 200ms = 2 seconds total
+  };
+
+  // Handle file selection and start the progress simulation
+  const handleFileSelect = (file: File) => {
+    setSelectedFile(file);
+    simulateUpload();
+  };
+
+    const handleFinalUpload = async () => {
+    if (!selectedFile) return;
+
+    try {
+      setUploadStatus("uploading");
+      setErrorMessage(null);
+
+      //Send metadata to backend
+      const metadata = {
+        originalName: selectedFile.name,
+        mimeType: selectedFile.type,
+        sizeBytes: selectedFile.size,
+        isEncrypted: isEncrypted, // existing checkbox state
+      };
+
+      const backendResponse = await requestUploadUrl(metadata);
+      const { presignedUrl, shareUrl: newShareUrl } = backendResponse.data;
+
+      // Upload file directly to S3
+      await uploadFileToS3(presignedUrl, selectedFile);
+
+      // Success!
+      setShareUrl(newShareUrl);
+      setUploadStatus("success");
+      
+    } catch (error) {
+      console.error("Upload failed:", error);
+      setErrorMessage(error instanceof Error ? error.message : "Unknown error occurred");
+      setUploadStatus("error");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -13,8 +77,23 @@ function UploadPage() {
           File Upload
         </h1>
 
-        {/*  the FileUploader component */}
-        <FileUploader onFileSelect={setSelectedFile} />
+        {/* UPDATED: Use handleFileSelect */}
+        <FileUploader onFileSelect={handleFileSelect} />
+
+        {/* Show progress bar when uploading */}
+        {isUploading && (
+          <div className="mt-6">
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div
+                className="bg-blue-600 h-2.5 rounded-full transition-all duration-200"
+                style={{ width: `${uploadProgress}%` }}
+              ></div>
+            </div>
+            <p className="text-center text-sm text-gray-600 mt-2">
+              Uploading... {uploadProgress}%
+            </p>
+          </div>
+        )}
 
         {/* Show file info if a file is selected */}
         {selectedFile && (
@@ -22,7 +101,6 @@ function UploadPage() {
             file={selectedFile} 
             onRemove={() => setSelectedFile(null)} 
           />
-          
         )}
 
         {/* Encryption toggle */}
@@ -38,6 +116,59 @@ function UploadPage() {
             <label htmlFor="encrypt-toggle" className="ml-2 text-gray-700">
               Encrypt File
             </label>
+          </div>
+        )}
+
+                {/* Upload Button (Only show if file selected and not yet uploaded) */}
+        {selectedFile && uploadStatus === "idle" && (
+          <button
+            onClick={handleFinalUpload}
+            className="mt-6 w-full py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+          >
+            🚀 Upload to Cloud
+          </button>
+        )}
+
+        {/* Uploading State */}
+        {uploadStatus === "uploading" && (
+          <div className="mt-6 text-center text-blue-600 font-medium animate-pulse">
+            Uploading to secure cloud storage...
+          </div>
+        )}
+
+        {/* Success State */}
+        {uploadStatus === "success" && shareUrl && (
+          <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-green-800 font-bold mb-2">✅ Upload Successful!</p>
+            <p className="text-sm text-green-700 mb-2">Share this link with your recipient:</p>
+            <div className="flex items-center gap-2">
+              <input 
+                type="text" 
+                value={shareUrl} 
+                readOnly 
+                className="flex-1 p-2 border border-green-300 rounded bg-white text-sm"
+              />
+              <button 
+                onClick={() => navigator.clipboard.writeText(shareUrl)}
+                className="px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {uploadStatus === "error" && (
+          <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-800 font-bold">❌ Upload Failed</p>
+            <p className="text-sm text-red-700 mt-1">{errorMessage}</p>
+            <button 
+              onClick={() => { setUploadStatus("idle"); setErrorMessage(null); }}
+              className="mt-3 text-sm text-red-600 underline hover:text-red-800"
+            >
+              Try Again
+            </button>
           </div>
         )}
       </div>

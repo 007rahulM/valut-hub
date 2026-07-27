@@ -21,3 +21,11 @@
   - Created Toggle Button to encrypt 
 
   - Handled File uploaded By using Multer and storing it in local
+
+  ## Week 2
+
+  - Week 2 Complete: Built the FileUploader component with drag-and-drop and useRef. 
+  
+  - Added file validation (blocklist/size), image previews using URL.createObjectURL, and a simulated progress bar. 
+  
+  - Understood the difference between useState (triggers re-render) and useRef (holds DOM reference without re-rendering).
