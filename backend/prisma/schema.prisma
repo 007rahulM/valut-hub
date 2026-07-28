@@ -8,24 +8,23 @@ datasource db {
 }
 
 model File {
-  id            String   @id @default(uuid())
-  token         String   @unique
+  id            String        @id @default(uuid())
+  token         String        @unique
   originalName  String
-  storedName    String   @unique
+  storedName    String        @unique
   mimeType      String
   sizeBytes     Int
-  isEncrypted   Boolean  @default(false)
+  isEncrypted   Boolean       @default(false)
   passwordHash  String?
   iv            String?
   salt          String?
   expiresAt     DateTime
-  downloadCount Int      @default(0)
-  maxDownloads  Int?
-  isDeleted     Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  activityLogs ActivityLog[]
+  downloadCount Int           @default(0)
+  maxDownloads  Int?          @default(10)
+  isDeleted     Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  activityLogs  ActivityLog[]
 
   @@index([token])
   @@index([expiresAt])
@@ -39,6 +38,5 @@ model ActivityLog {
   userAgent     String?
   success       Boolean
   failureReason String?
-
-  file File @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  file          File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
 }
