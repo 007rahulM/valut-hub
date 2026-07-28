@@ -11,6 +11,14 @@ import{S3Client, PutObjectCommand, GetObjectCommand}from "@aws-sdk/client-s3";
 //getSingedUrl = it creates temorary preigned urls 
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
+console.log("[s3Service] INIT: creating S3 client");
+console.log("[s3Service] INIT: env check", {
+  hasRegion: !!process.env.AWS_REGION,
+  hasAccessKey: !!process.env.AWS_ACCESS_KEY,
+  hasSecretKey: !!process.env.AWS_SECRET_KEY,
+  hasBucketName: !!process.env.AWS_S3_BUCKET_NAME,
+});
+
 //creating a S3 client to make connection to AWS account 
 
 const s3Client = new  S3Client({
@@ -32,46 +40,61 @@ const BUCKET_NAME=process.env.AWS_S3_BUCKET_NAME!;
 
 
 //  Generate Upload URL - it creates a temporary url to upload a file to s3
-export async function generateUploadUrl(storedName: string): Promise<string> {
+export async function generateUploadUrl(storedName: string): Promise<string> { 
+console.log(`[generateUploadUrl] STEP 1: called`, { storedName, bucket: BUCKET_NAME });
   // Tell S3 we want to upload (PUT) a file
   const command = new PutObjectCommand({
     Bucket: BUCKET_NAME,
     Key: storedName,  // The unique filename in S3
     // No ACL needed - bucket policy controls access
   });
+   console.log(` [generateUploadUrl] STEP 2: PutObjectCommand created`);
 
   // Generate presigned URL valid for 5 minutes
+  try{
+    console.log(` [generateUploadUrl] STEP 3: getSignedUrl start`);
   const signedUrl = await getSignedUrl(s3Client, command, {
     expiresIn: 300,  // 300 seconds = 5 minutes
   });
+  console.log(` [generateUploadUrl] STEP 3 DONE: getSignedUrl success`, { signedUrl });
 
   return signedUrl;
+}catch(err){
+  throw err;
+
+}finally{
+  console.log(` [generateUploadUrl] STEP END: finished`);
+}
 }
 
 
 //  Generate Dowload URL - it creates a temporary url to download a file fro s3
 
-export async function generateDownloadUrl(storedName:string): Promise<string> {
-    
-    
-    //tell s3 i want to download this file from this bucket
-
-    const command = new GetObjectCommand({
-        Bucket: BUCKET_NAME, // our bucket name
-        Key: storedName,  //this file name in the s3 bucket
-    });
-    
-  //generate persigned url - created a temporary link valid for 300seconds like 5 min
-
-  const signedUrl =await getSignedUrl(s3Client,command,{
-    expiresIn:300,  // 300 seconds= 5 min 
+export async function generateDownloadUrl(storedName: string) : Promise <string>{
+  
+  console.log("[generateDownloadUrl] STEP 1: called", { storedName, bucket: BUCKET_NAME });
+  //tell s3 i want to download this file from this bucket
+  const command = new GetObjectCommand({
+    Bucket:BUCKET_NAME, //our bucket name 
+    Key:storedName,  //this file name in the s3 bucket
   });
+  console.log("[generateDownloadUrl] STEP 2: GetObjectCommand created");
 
-  //return the url //frontend will use this to dowload directly from s3 so return 
-  return signedUrl;
+  //generate presigned url valid for 5 min 
+  try{
+    console.log(`[generateDownloadUrl] STEP 3: getSignedUrl start`);
+    const signedUrl= await getSignedUrl(s3Client,command,{
+      expiresIn:300, //300 seconds = 5 min 
 
+    });
 
+    console.log(`[generateDownloadUrl] STEP 3 DONE: getSignedUrl success`, { signedUrl });
+    return signedUrl; 
+   }catch(err){
+    console.error(`[generateDownloadUrl] STEP ERROR: getSignedUrl failed`, err);
+    throw err;
+   }
+   finally{
+    console.log(`[generateDownloadUrl] STEP END: finished`);
+   }
 }
-
-
-

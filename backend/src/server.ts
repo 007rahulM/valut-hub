@@ -20,12 +20,19 @@ app.use(express.json());   //parse JSON request bodies
 //use the upload route for handling file uploads
 // POST /api/upload - Create a new upload record and get a presigned URL
 app.post("/api/upload", async (req, res) => {
+    console.log(`[POST /api/upload] STEP 1: route hit`);
+  console.log(`[POST /api/upload] STEP 2: req.body`, req.body);
   try {
     // 1. Get metadata from the frontend request
     const { originalName, mimeType, sizeBytes, isEncrypted, passwordHash, iv, salt } = req.body;
+     console.log(` [POST /api/upload] STEP 3: extracted fields`, {
+      originalName, mimeType, sizeBytes, isEncrypted,
+      hasPasswordHash: !!passwordHash, hasIv: !!iv, hasSalt: !!salt
+    });
 
     // Basic validation
     if (!originalName || !mimeType || !sizeBytes) {
+        console.log(`[ [POST /api/upload] STEP 3.1: validation failed`);
       return res.status(400).json({
         success: false,
         error: { code: "INVALID_INPUT", message: "Missing required file metadata" },
@@ -36,11 +43,13 @@ app.post("/api/upload", async (req, res) => {
     const token = crypto.randomUUID(); 
     // Stored name is the actual filename in S3 (prevents collisions)
     const storedName = `${crypto.randomUUID()}-${originalName}`; 
+     console.log(`[POST /api/upload] STEP 4: generated token/storedName`, { token, storedName });
 
     // 3. Calculate expiration (7 days from now)
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
+ console.log(`[ [POST /api/upload] STEP 5: expiresAt`, expiresAt.toISOString());
     // 4. Save metadata to the database using Prisma
+     console.log(`[POST /api/upload] STEP 6: prisma.file.create start`);
     const fileRecord = await prisma.file.create({
       data: {
         token,
@@ -55,11 +64,14 @@ app.post("/api/upload", async (req, res) => {
         expiresAt,
       },
     });
+ console.log(`[ [POST /api/upload] STEP 6 DONE: prisma.file.create success`, { fileId: fileRecord.id, token: fileRecord.token });
 
     // 5. Generate the Presigned Upload URL from S3
+    console.log(` [POST /api/upload] STEP 7: generateUploadUrl start`, { storedName });
     const presignedUrl = await generateUploadUrl(storedName);
-
+ console.log(`[ [POST /api/upload] STEP 7 DONE: generateUploadUrl success`);
     // 6. Send the response back to the frontend
+        console.log(` [POST /api/upload] STEP 8: sending success response`);
     res.json({
       success: true,
       data: {
@@ -71,11 +83,14 @@ app.post("/api/upload", async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Upload error:", error);
+    console.error(` [POST /api/upload] STEP ERROR: Upload error`, error);
     res.status(500).json({
       success: false,
       error: { code: "UPLOAD_FAILED", message: "Failed to process upload" },
     });
+  }
+  finally{
+    console.log(` [POST /api/upload] END`);
   }
 });
 

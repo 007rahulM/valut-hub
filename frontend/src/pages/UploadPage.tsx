@@ -9,13 +9,15 @@ function UploadPage() {
   const [isEncrypted, setIsEncrypted] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "success" | "error">("idle");
+  const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading"|"encrypting" | "success" | "error">("idle");
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [password, setPassword] = useState(""); // New state for password
 
   // Simulate upload progress
   const simulateUpload = () => {
+      // console.log("[UploadPage] simulateUpload:start");
+    
     setIsUploading(true);
     setUploadProgress(0);
     
@@ -23,12 +25,14 @@ function UploadPage() {
     const interval = setInterval(() => {
       progress += 10;
       setUploadProgress(progress);
+      //  console.log("[UploadPage] simulateUpload:progress", progress);
       
       if (progress >= 100) {
         clearInterval(interval);
         setTimeout(() => {
           setIsUploading(false);
           setUploadProgress(0);
+          //  console.log("[UploadPage] simulateUpload:done");
         }, 500);
       }
     }, 200); // Updates every 200ms = 2 seconds total
@@ -36,19 +40,31 @@ function UploadPage() {
 
   // Handle file selection and start the progress simulation
   const handleFileSelect = (file: File) => {
+    //  console.log("[UploadPage] handleFileSelect:file", {
+      // name: file.name,
+      // type: file.type,
+      // size: file.size,
+    // });
     setSelectedFile(file);
     simulateUpload();
   };
 
    const handleFinalUpload = async () => {
-  if (!selectedFile) return;
+    //  console.log(` STEP 0: handleFinalUpload called`);
+  if (!selectedFile){
+    // console.log(`STEP 0.1: no selectedFile, return`);
+    return;
+
+  }
   if (isEncrypted && !password) {
+    //  console.log(`[ STEP 0.2: encryption enabled but password missing`);
     setErrorMessage("Please enter a password for encryption.");
     setUploadStatus("error");
     return;
   }
 
   try {
+    // console.log(`[STEP 1: set uploading status`);
     setUploadStatus("uploading");
     setErrorMessage(null);
 
@@ -56,18 +72,32 @@ function UploadPage() {
     let salt = null;
     let iv = null;
 
+    //  console.log(` STEP 2: selected file`, {
+        // name: selectedFile.name,
+        // type: selectedFile.type,
+        // size: selectedFile.size,
+        // isEncrypted,
+      // });
+
     // IF ENCRYPTED: Encrypt the file first!
     if (isEncrypted) {
-      setUploadStatus("encrypting..."); // Update UI to show encryption is happening
+      // console.log(` STEP 3: encryptFile:start`);
+      setUploadStatus("encrypting"); // Update UI to show encryption is happening
       const encryptionResult = await encryptFile(selectedFile, password);
       fileToUpload = encryptionResult.encryptedFile;
       salt = encryptionResult.salt;
       iv = encryptionResult.iv;
+        // console.log(` STEP 3 DONE: encryptFile:success`, {
+          // encryptedSize: fileToUpload.size,
+          // hasSalt: !!salt,
+          // hasIv: !!iv,
+        // });
     }
 
     setUploadStatus("uploading"); // Back to uploading
 
     // Step 1: Send metadata to backend
+    //  console.log(`STEP 4: prepare metadata`);
     const metadata = {
       originalName: selectedFile.name,
       mimeType: isEncrypted ? "application/octet-stream" : selectedFile.type,
@@ -77,32 +107,42 @@ function UploadPage() {
       iv: iv,
       salt: salt,
     };
+    // console.log(` STEP 4 DONE: metadata`, metadata);
 
+    //  console.log(` STEP 5: requestUploadUrl:start`);
     const backendResponse = await requestUploadUrl(metadata);
+    //  console.log(`STEP 5 DONE: requestUploadUrl:success`, backendResponse);
     const { presignedUrl, shareUrl: newShareUrl } = backendResponse.data;
+    //  console.log(` STEP 6: uploadFileToS3:start`, { presignedUrl });
 
     // Step 2: Upload file (encrypted or not) directly to S3
     await uploadFileToS3(presignedUrl, fileToUpload);
-
+  console.log(` STEP 6 DONE: uploadFileToS3:success`);
     // Step 3: Success!
     setShareUrl(newShareUrl);
     setUploadStatus("success");
-    console.log("Upload successful! Share URL:", newShareUrl);
+    // console.log("Upload successful! Share URL:", newShareUrl);
     
   } catch (error) {
     console.error("Upload failed:", error);
     setErrorMessage(error instanceof Error ? error.message : "Unknown error occurred");
     setUploadStatus("error");
   }
+  finally {
+// console.log(`STEP END: handleFinalUpload finished`);
+  }
 };
 
 // Helper to hash the password for the backend (so backend can verify it later)
 async function hashPassword(password: string) {
+  // console.log("[UploadPage] hashPassword:start");
   const encoder = new TextEncoder();
   const data = encoder.encode(password);
   const hashBuffer = await window.crypto.subtle.digest("SHA-256", data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  const result=hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  //  console.log("[UploadPage] hashPassword:done");
+   return result;
 }
 
   return (

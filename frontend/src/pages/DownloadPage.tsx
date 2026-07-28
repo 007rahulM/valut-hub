@@ -43,7 +43,7 @@ export function DownloadPage() {
         setLoading(true);
         setError(null);
         const response = await fetchFileMetadata(token);
-        setFile(response.data);
+        setFile(response);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load file");
       } finally {
@@ -55,40 +55,44 @@ export function DownloadPage() {
 
   // ===== HANDLE DOWNLOAD BUTTON CLICK =====
   const handleDownload = async () => {
-    console.log("Step 1: Button clicked, requesting download URL...");
-    console.log("token:", token);
-    console.log("file:", file);
+    // console.log("Step 1: Button clicked, requesting download URL...");
+    // console.log("token:", token);
+    // console.log("file:", file);
     
     if (!token || !file) {
-      console.log("step 2 : missing token or file, stopping");
+      // console.log("step 2 : missing token or file, stopping");
       return;
     }
-    console.log("Step 2: token and file exist");
+    // console.log("Step 2: token and file exist");
     setDownloading(true);
     setError(null);
 
     try {
-      console.log("step 3: calling requestDownloadUrl...");
-      const result = await requestDownloadUrl(
-        token,
-        file.isEncrypted ? password : undefined
-      );
-      console.log("step 4: got result:", result);
+      // console.log("step 3: calling requestDownloadUrl...");
+      // const result = await requestDownloadUrl(
+      //   token,
+      //   file.isEncrypted ? password : undefined
+      // );
+      // console.log("step 4: got result:", result);
 
       // 1. Store the internal data wrapper into an object
-      const downloadData = result.data;
+      const downloadData = await requestDownloadUrl(
+        token,
+        file.isEncrypted ? password:undefined
+      );
+// console.log("step 4: got downloadData:", downloadData);
 
       if (!downloadData.isEncrypted) {
-        console.log("step 5: file not encrypted, triggering download");
-        console.log("URL:", downloadData.downloadUrl);
-        console.log("Filename:", downloadData.originalName);
+        // console.log("step 5: file not encrypted, triggering download");
+        // console.log("URL:", downloadData.downloadUrl);
+        // console.log("Filename:", downloadData.originalName);
         
         // 2. Pass the nested data parameters to your trigger function
         triggerDownload(downloadData.downloadUrl, downloadData.originalName);
-        console.log("step 6: triggeredDownload called");
+        // console.log("step 6: triggeredDownload called");
       } else {
         // Encrypted file workflow
-        console.log("File is encrypted, Downloading and decrypting...");
+        // console.log("File is encrypted, Downloading and decrypting...");
         
         // 3. Fetch from nested object URL
         const encryptedResponse = await fetch(downloadData.downloadUrl);
@@ -97,7 +101,7 @@ export function DownloadPage() {
         }
         
         const encryptedData = await encryptedResponse.arrayBuffer();
-        console.log("Downloaded encrypted file from S3");
+        // console.log("Downloaded encrypted file from S3");
 
         // 4. Verify nested encryption properties
         if (!downloadData.salt || !downloadData.iv) {
@@ -110,14 +114,14 @@ export function DownloadPage() {
           downloadData.salt,
           downloadData.iv
         );
-        console.log("Decryption was successful");
+        // console.log("Decryption was successful");
 
         triggerDownloadFromArrayBuffer(
           decryptedData,
           downloadData.originalName,
           downloadData.mimeType
         );
-        console.log("File saved to Downloads Folder");
+        // console.log("File saved to Downloads Folder");
       }
     } catch (err) {
       console.log("Error in try block:", err);
