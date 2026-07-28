@@ -2,6 +2,7 @@ import { useState } from "react";
 import { FileUploader } from "../components/FileUploader";
 import FileInfo from "../components/FileInfo";
 import {requestUploadUrl, uploadFileToS3} from "../lib/api"; 
+import { encryptFile } from "../lib/crypto";
 
 function UploadPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -11,6 +12,7 @@ function UploadPage() {
   const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "success" | "error">("idle");
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [password, setPassword] = useState(""); // New state for password
 
   // Simulate upload progress
   const simulateUpload = () => {
@@ -38,37 +40,70 @@ function UploadPage() {
     simulateUpload();
   };
 
-    const handleFinalUpload = async () => {
-    if (!selectedFile) return;
+   const handleFinalUpload = async () => {
+  if (!selectedFile) return;
+  if (isEncrypted && !password) {
+    setErrorMessage("Please enter a password for encryption.");
+    setUploadStatus("error");
+    return;
+  }
 
-    try {
-      setUploadStatus("uploading");
-      setErrorMessage(null);
+  try {
+    setUploadStatus("uploading");
+    setErrorMessage(null);
 
-      //Send metadata to backend
-      const metadata = {
-        originalName: selectedFile.name,
-        mimeType: selectedFile.type,
-        sizeBytes: selectedFile.size,
-        isEncrypted: isEncrypted, // existing checkbox state
-      };
+    let fileToUpload = selectedFile;
+    let salt = null;
+    let iv = null;
 
-      const backendResponse = await requestUploadUrl(metadata);
-      const { presignedUrl, shareUrl: newShareUrl } = backendResponse.data;
-
-      // Upload file directly to S3
-      await uploadFileToS3(presignedUrl, selectedFile);
-
-      // Success!
-      setShareUrl(newShareUrl);
-      setUploadStatus("success");
-      
-    } catch (error) {
-      console.error("Upload failed:", error);
-      setErrorMessage(error instanceof Error ? error.message : "Unknown error occurred");
-      setUploadStatus("error");
+    // IF ENCRYPTED: Encrypt the file first!
+    if (isEncrypted) {
+      setUploadStatus("encrypting..."); // Update UI to show encryption is happening
+      const encryptionResult = await encryptFile(selectedFile, password);
+      fileToUpload = encryptionResult.encryptedFile;
+      salt = encryptionResult.salt;
+      iv = encryptionResult.iv;
     }
-  };
+
+    setUploadStatus("uploading"); // Back to uploading
+
+    // Step 1: Send metadata to backend
+    const metadata = {
+      originalName: selectedFile.name,
+      mimeType: isEncrypted ? "application/octet-stream" : selectedFile.type,
+      sizeBytes: fileToUpload.size,
+      isEncrypted: isEncrypted,
+      passwordHash: isEncrypted ? await hashPassword(password) : null, // We'll add this helper next
+      iv: iv,
+      salt: salt,
+    };
+
+    const backendResponse = await requestUploadUrl(metadata);
+    const { presignedUrl, shareUrl: newShareUrl } = backendResponse.data;
+
+    // Step 2: Upload file (encrypted or not) directly to S3
+    await uploadFileToS3(presignedUrl, fileToUpload);
+
+    // Step 3: Success!
+    setShareUrl(newShareUrl);
+    setUploadStatus("success");
+    console.log("Upload successful! Share URL:", newShareUrl);
+    
+  } catch (error) {
+    console.error("Upload failed:", error);
+    setErrorMessage(error instanceof Error ? error.message : "Unknown error occurred");
+    setUploadStatus("error");
+  }
+};
+
+// Helper to hash the password for the backend (so backend can verify it later)
+async function hashPassword(password: string) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await window.crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+}
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -119,13 +154,24 @@ function UploadPage() {
           </div>
         )}
 
+        {/* Password input for encryption */}
+        {isEncrypted && (
+           <input
+                type="password"
+                placeholder="Enter a strong password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-2 w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none"
+  />
+)}
+
                 {/* Upload Button (Only show if file selected and not yet uploaded) */}
         {selectedFile && uploadStatus === "idle" && (
           <button
             onClick={handleFinalUpload}
             className="mt-6 w-full py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
           >
-            🚀 Upload to Cloud
+             Upload to Cloud
           </button>
         )}
 
