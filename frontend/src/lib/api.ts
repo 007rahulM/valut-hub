@@ -14,6 +14,9 @@ const API_BASE = "http://localhost:3001";
  * @returns The file information object
  * @throws Error if file not found, expired, or server problem
  */
+
+
+
 export async function fetchFileMetadata(token: string) {
   // Ask the backend for this file
   const response = await fetch(`${API_BASE}/api/file/${token}`);
