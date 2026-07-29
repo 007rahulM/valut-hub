@@ -3,6 +3,9 @@ import { FileUploader } from "../components/FileUploader";
 import FileInfo from "../components/FileInfo";
 import {requestUploadUrl, uploadFileToS3} from "../lib/api"; 
 import { encryptFile } from "../lib/crypto";
+import toast from "react-hot-toast";
+
+import { Link } from "react-router-dom"; 
 
 function UploadPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -12,7 +15,8 @@ function UploadPage() {
   const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading"|"encrypting" | "success" | "error">("idle");
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [password, setPassword] = useState(""); // New state for password
+  const [password, setPassword] = useState(""); 
+    const [acceptedTerms, setAcceptedTerms] = useState(false); 
 
   // Simulate upload progress
   const simulateUpload = () => {
@@ -47,15 +51,24 @@ function UploadPage() {
     // });
     setSelectedFile(file);
     simulateUpload();
+    
+    // ✅ TOAST: file selected
+    toast.success(`File selected: ${file.name}`, { duration: 2500 });
   };
+
 
    const handleFinalUpload = async () => {
     //  console.log(` STEP 0: handleFinalUpload called`);
   if (!selectedFile){
     // console.log(`STEP 0.1: no selectedFile, return`);
+     // ✅ TOAST: password missing
+      toast.error("Please enter a password for encryption.", { duration: 3000 });
     return;
 
   }
+
+
+
   if (isEncrypted && !password) {
     //  console.log(`[ STEP 0.2: encryption enabled but password missing`);
     setErrorMessage("Please enter a password for encryption.");
@@ -63,6 +76,17 @@ function UploadPage() {
     return;
   }
 
+     // ✅ Check terms acceptance
+    if (!acceptedTerms) {
+      setErrorMessage("You must agree to the Terms of Service and Privacy Policy.");
+      setUploadStatus("error");
+      toast.error("Please accept the Terms & Privacy Policy.", { duration: 3000 });
+      return;
+    }
+
+
+   // start upload toast (loading spinner)
+    const uploadToastId = toast.loading("Preparing upload...", { duration: Infinity });
   try {
     // console.log(`[STEP 1: set uploading status`);
     setUploadStatus("uploading");
@@ -83,6 +107,7 @@ function UploadPage() {
     if (isEncrypted) {
       // console.log(` STEP 3: encryptFile:start`);
       setUploadStatus("encrypting"); // Update UI to show encryption is happening
+      toast.loading("Encrypting file...", { id: uploadToastId }); // update loading text
       const encryptionResult = await encryptFile(selectedFile, password);
       fileToUpload = encryptionResult.encryptedFile;
       salt = encryptionResult.salt;
@@ -95,6 +120,7 @@ function UploadPage() {
     }
 
     setUploadStatus("uploading"); // Back to uploading
+     toast.loading("Uploading to cloud...", { id: uploadToastId });
 
     // Step 1: Send metadata to backend
     //  console.log(`STEP 4: prepare metadata`);
@@ -123,10 +149,18 @@ function UploadPage() {
     setUploadStatus("success");
     // console.log("Upload successful! Share URL:", newShareUrl);
     
+    // ✅ TOAST: success – replaces the loading toast
+      toast.success("Upload complete! Link is ready.", { id: uploadToastId, duration: 4000 });
+
+
   } catch (error) {
     console.error("Upload failed:", error);
-    setErrorMessage(error instanceof Error ? error.message : "Unknown error occurred");
+    const msg = error instanceof Error ? error.message : "Unknown error";
+      setErrorMessage(msg);
     setUploadStatus("error");
+
+     // ✅ TOAST: error – replaces loading toast
+      toast.error(msg, { id: uploadToastId, duration: 4000 });
   }
   finally {
 // console.log(`STEP END: handleFinalUpload finished`);
@@ -144,11 +178,18 @@ async function hashPassword(password: string) {
   //  console.log("[UploadPage] hashPassword:done");
    return result;
 }
+ // ✅ Helper: copy link to clipboard with toast
+  const handleCopyLink = () => {
+    if (shareUrl) {
+      navigator.clipboard.writeText(shareUrl);
+      toast.success("Link copied to clipboard!", { duration: 2000 });
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-white-50 p-8">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">
+        <h1 className="text-3xl font-bold text-white-800 mb-6">
           File Upload
         </h1>
 
@@ -174,7 +215,10 @@ async function hashPassword(password: string) {
         {selectedFile && (
           <FileInfo 
             file={selectedFile} 
-            onRemove={() => setSelectedFile(null)} 
+            onRemove={() => {setSelectedFile(null)
+              // ✅ TOAST: file removed
+              toast("File removed", { icon: "🗑️", duration: 2000 });
+            }}
           />
         )}
 
@@ -203,13 +247,41 @@ async function hashPassword(password: string) {
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-2 w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none"
   />
-)}
+)}     
+
+           {/* ✅ Terms & Privacy Checkbox */}
+        {selectedFile && (
+          <div className="mt-4 flex items-start">
+            <input
+              type="checkbox"
+              id="terms-checkbox"
+              checked={acceptedTerms}
+              onChange={(e) => setAcceptedTerms(e.target.checked)}
+              className="mt-1 h-4 w-4 text-blue-600 rounded"
+            />
+            <label htmlFor="terms-checkbox" className="ml-2 text-sm text-gray-700">
+              I agree to the{" "}
+              <Link to="/terms" className="text-blue-600 hover:underline">
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link to="/privacy" className="text-blue-600 hover:underline">
+                Privacy Policy
+              </Link>
+            </label>
+          </div>
+        )}
 
                 {/* Upload Button (Only show if file selected and not yet uploaded) */}
         {selectedFile && uploadStatus === "idle" && (
           <button
             onClick={handleFinalUpload}
-            className="mt-6 w-full py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+            disabled={!acceptedTerms}  
+  className={`mt-6 w-full py-3 font-bold rounded-lg transition-colors flex items-center justify-center gap-2 ${
+    acceptedTerms
+      ? "bg-blue-600 text-white hover:bg-blue-700"
+      : "bg-blue-300 text-gray-100 cursor-not-allowed"
+  }`}
           >
              Upload to Cloud
           </button>
@@ -235,7 +307,8 @@ async function hashPassword(password: string) {
                 className="flex-1 p-2 border border-green-300 rounded bg-white text-sm"
               />
               <button 
-                onClick={() => navigator.clipboard.writeText(shareUrl)}
+                // onClick={() => navigator.clipboard.writeText(shareUrl)}
+                onClick={handleCopyLink}
                 className="px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700"
               >
                 Copy

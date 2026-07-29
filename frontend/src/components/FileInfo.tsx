@@ -37,7 +37,7 @@ function FileInfo({ file, onRemove }: FileInfoProps) {
         className="mt-3 px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-red-600" 
         onClick={() => { 
           onRemove();
-          alert("File removed successfully!");
+          // alert("File removed successfully!");
         }}
       >
         Remove File

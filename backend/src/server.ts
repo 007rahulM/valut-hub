@@ -71,7 +71,7 @@ app.post("/api/upload", async (req, res) => {
     const presignedUrl = await generateUploadUrl(storedName);
 //  console.log(`[ [POST /api/upload] STEP 7 DONE: generateUploadUrl success`);
     // 6. Send the response back to the frontend
-        console.log(` [POST /api/upload] STEP 8: sending success response`);
+        // console.log(` [POST /api/upload] STEP 8: sending success response`);
     res.json({
       success: true,
       data: {
@@ -90,7 +90,7 @@ app.post("/api/upload", async (req, res) => {
     });
   }
   finally{
-    console.log(` [POST /api/upload] END`);
+    // console.log(` [POST /api/upload] END`);
   }
 });
 

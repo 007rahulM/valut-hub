@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { fetchFileMetadata, requestDownloadUrl } from "../lib/api";
 import { triggerDownload, triggerDownloadFromArrayBuffer } from "../lib/download";
 import { decryptFile } from "../lib/crypto";
+import toast, { Toaster } from "react-hot-toast"; 
 
 interface FileMetadata {
   originalName: string;
@@ -30,6 +31,7 @@ export function DownloadPage() {
   const [error, setError] = useState<string | null>(null);
   const [password, setPassword] = useState("");
   const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   // ===== LOAD FILE METADATA WHEN PAGE OPENS =====
   useEffect(() => {
@@ -65,7 +67,7 @@ export function DownloadPage() {
     }
     // console.log("Step 2: token and file exist");
     setDownloading(true);
-    setError(null);
+    setDownloadError(null);
 
     try {
       // console.log("step 3: calling requestDownloadUrl...");
@@ -89,6 +91,7 @@ export function DownloadPage() {
         
         // 2. Pass the nested data parameters to your trigger function
         triggerDownload(downloadData.downloadUrl, downloadData.originalName);
+         toast.success("Download started!"); 
         // console.log("step 6: triggeredDownload called");
       } else {
         // Encrypted file workflow
@@ -121,13 +124,17 @@ export function DownloadPage() {
           downloadData.originalName,
           downloadData.mimeType
         );
+           toast.success("File decrypted and download started!"); 
         // console.log("File saved to Downloads Folder");
       }
     } catch (err) {
-      console.log("Error in try block:", err);
-      setError(err instanceof Error ? err.message : "Download failed");
+      // console.log("Error in try block:", err);
+   // Set local download error (keeps page intact)
+      const message = err instanceof Error ? err.message : "Download failed";
+      setDownloadError(message);
+      toast.error(message);
     } finally {
-      console.log("finally block running");
+      // console.log("finally block running");
       setDownloading(false);
     }
   };
@@ -135,7 +142,7 @@ export function DownloadPage() {
   // ========== LOADING STATE ==========
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="min-h-screen flex items-center justify-center bg-white-100">
         <div className="text-center">
           <div className="w-10 h-10 border-4 border-gray-200 border-t-blue-600 rounded-full mx-auto mb-4 animate-spin" />
           <p className="text-gray-500 text-sm m-0">Loading file...</p>
@@ -147,7 +154,7 @@ export function DownloadPage() {
   // ========== ERROR STATE ==========
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="min-h-screen flex items-center justify-center bg-white-100">
         <div className="p-6 bg-red-50 border border-red-200 rounded-lg text-center">
           <p className="text-red-600 text-sm">{error}</p>
         </div>
@@ -157,7 +164,8 @@ export function DownloadPage() {
 
   // ========== MAIN PAGE ==========
   return (
-    <div className="min-h-screen bg-gray-100 py-12 px-4">
+    <div className="min-h-screen bg-white-100 py-12 px-4">
+      <Toaster position="top-center" />   {/* <-- Toast container */}
       <div className="max-w-md mx-auto bg-white rounded-xl p-8 border border-gray-200">
         {/* File Header */}
         <div className="flex items-center gap-4 pb-6 mb-6 border-b border-gray-200">
@@ -179,6 +187,8 @@ export function DownloadPage() {
           <DetailItem label="Encrypted" value={file?.isEncrypted ? "Yes" : "No"} />
           <DetailItem label="Downloads" value={String(file?.downloadCount || 0)} />
         </div>
+
+           
 
         {/* Password Input */}
         {file?.isEncrypted && (
@@ -204,6 +214,13 @@ export function DownloadPage() {
         >
           {downloading ? "Downloading..." : "Download File"}
         </button>
+
+           {/* Local download error – displayed only below the button */}
+        {downloadError && (
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+            {downloadError}
+          </div>
+        )}
 
         {/* Token */}
         <p className="mt-6 text-center text-xs text-gray-300">
