@@ -81,7 +81,7 @@ VaultHub is built around a privacy-first flow so that:
 ## Team
 
 - **Naveen** — Upload & Encryption
-- **Rahul** — Download & Security
+- **Rahul** — Download & Decryption 
 
 ---
 
