@@ -47,7 +47,7 @@ async function getKey(password: string, salt: Uint8Array) {
   return window.crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
-      salt: salt,
+      salt: salt as unknown as BufferSource,
       iterations: 100000, // Matches your decryption!
       hash: "SHA-256",
     },
@@ -67,7 +67,7 @@ export async function encryptFile(file: File, password: string) {
 
   // Encrypt the data
   const encryptedBuffer = await window.crypto.subtle.encrypt(
-    { name: "AES-GCM", iv: iv },
+    { name: "AES-GCM", iv: iv as unknown as BufferSource },
     key,
     fileBuffer
   );
