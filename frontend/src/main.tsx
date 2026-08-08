@@ -1,10 +1,34 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import './index.css'   // <-- THIS LINE MUST EXIST
-import App from './App'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { MantineProvider, createTheme } from "@mantine/core";
+import { Toaster } from "react-hot-toast";
+import "@mantine/core/styles.css";
+import "@mantine/dropzone/styles.css";
+import "./index.css";
+import App from "./App";
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
+const theme = createTheme({
+  primaryColor: "brand",
+  defaultRadius: "md",
+  colors: {
+    brand: [
+      "#FFF4EF", "#FFE4D8", "#FDC9B2", "#F9A57E", "#F58352",
+      "#EF6430", "#E8501E", "#CE4214", "#F4581F", "#8A2B0E",
+    ],
+    dark: [
+      "#EDF2F9", "#D5DEE9", "#A8B7CB", "#7C8DA6", "#5A6B84",
+      "#3D4C63", "#243248", "#182338", "#101A2C", "#0B1220",
+    ],
+  },
+});
+
+// const stored = (localStorage.getItem("vh-theme") as "light" | "dark" | null) ?? "auto";
+
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+<MantineProvider theme={theme} defaultColorScheme="auto">
+      <Toaster position="top-center" />
+      <App />
+    </MantineProvider>
+  </StrictMode>
+);

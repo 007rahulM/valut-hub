@@ -56,6 +56,11 @@ export async function triggerDownloadv2(url:string, filename:string):Promise<voi
 
         //convert response to blob (blob is a file-like object)
         const blob=await response.blob();
+
+         // CRITICAL: Validate the blob actually has content
+    if (blob.size === 0) {
+      throw new Error("Downloaded file is empty - please try again");
+    }
         
         //created  a temporary url for the blob
         const bloburl=URL.createObjectURL(blob);
@@ -65,6 +70,8 @@ export async function triggerDownloadv2(url:string, filename:string):Promise<voi
         link.href=bloburl;
 
         link.download=filename;   //forces save as dialog  // so we will make that link to download  as a action 
+
+        link.style.display = "none"; 
 
         //trigger download link to get click because this function runs when the button is already clicked so 
 
@@ -104,6 +111,11 @@ export async function triggerDownloadFromArrayBuffer(
     mimeType:string
 ): Promise<void> {
 
+      // Validate data isn't empty
+  if (data.byteLength === 0) {
+    throw new Error("Decrypted file is empty - please try again");
+  }
+
     //1. wrap bytes in a blob gives it a file identity
     const blob=new Blob([data],{type:mimeType});
 
@@ -114,6 +126,7 @@ export async function triggerDownloadFromArrayBuffer(
      const link=document.createElement("a");
      link.href=blobUrl;
      link.download=filename; //forces save as dialog
+      link.style.display = "none";
      document.body.appendChild(link);
      link.click();
 

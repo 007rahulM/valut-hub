@@ -1,14 +1,34 @@
+import { PageShell } from "../components/PageSheel";
+import { Text } from "@mantine/core";
+import { Term } from "../components/Term";
+
 export function AboutPage() {
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
-      <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-sm p-8 border border-gray-200">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">About VaultHub</h1>
-        <div className="prose prose-blue text-gray-600 space-y-4">
-          <p><strong>Our Mission:</strong> VaultHub was built with a simple, non-negotiable principle: your files should belong to you, and only you. We provide a secure, zero-knowledge file-sharing platform that is as easy to use as a standard link, but as secure as a locked vault.</p>
-          <p><strong>Why It Matters:</strong> Every day, millions of sensitive files (contracts, medical records, design assets, source code) are shared through traditional email or cloud storage. Most services can read, scan, and analyze these files. VaultHub changes that by putting the encryption key in your hands, not ours.</p>
-          <p><strong>Our Goal:</strong> To make privacy-first file sharing the default standard for everyone, from individual creators to enterprise teams, without compromising on speed or user experience.</p>
-        </div>
-      </div>
-    </div>
+    <PageShell title="About VaultHub" subtitle="Privacy-first file sharing, for everyone.">
+      <img src="/illustrations/about.svg" alt="A secure vault"
+        style={{ maxWidth: 280, width: "100%", height: "auto", margin: "0 auto 28px", display: "block" }} />
+
+      <Text fz="sm" c="dimmed" mb="md" lh={1.7}>
+        <Text component="span" fw={700} c="var(--mantine-color-text)">Our Mission:</Text> Your files should belong to you, and only you. Most cloud services were built to keep files forever — and to read them: their terms allow automated scanning, processing and machine-learning on your content. VaultHub was built to reverse that. We provide file sharing that is as easy as a standard link, but as private as a locked vault.
+      </Text>
+
+      <Text fz="sm" c="dimmed" mb="md" lh={1.7}>
+        <Text component="span" fw={700} c="var(--mantine-color-text)">How we're different:</Text> VaultHub uses{" "}
+        <Term tip="A security model where the server only stores encrypted data and never possesses the keys to decrypt it. Even if our servers were compromised, your files would remain unreadable.">zero-knowledge</Term>{" "}
+        architecture. Files are encrypted on your device with{" "}
+        <Term tip="The industry-standard encryption used by banks and password managers. If even one byte is tampered with, unlocking simply fails.">AES-GCM</Term>{" "}
+        before upload. We never scan your files, never train AI on them, and delete them automatically after 1 day or 10 downloads. "Delete" actually means delete here.
+      </Text>
+
+      <Text fz="sm" c="dimmed" mb="md" lh={1.7}>
+        <Text component="span" fw={700} c="var(--mantine-color-text)">Who it's for:</Text> Everyone. Students and teachers sharing coursework for a limited time. Freelancers delivering work to clients. Families sending photos without a permanent album. Developers sending credentials safely. Creators selling digital goods with limited downloads. Clinics and consultants sharing sensitive documents. And anyone who simply believes their documents shouldn't live on the internet forever.
+      </Text>
+
+      <Text fz="sm" c="dimmed" lh={1.7}>
+        <Text component="span" fw={700} c="var(--mantine-color-text)">One light-hearted note:</Text> VaultHub exists to keep private things private — so please don't use it to leak exam papers, spoilers, or anyone else's secrets without permission. Privacy is a right we protect, not a loophole we provide. 🙂
+      </Text>
+    </PageShell>
   );
 }
+
+export default AboutPage;

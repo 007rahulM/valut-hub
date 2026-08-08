@@ -45,8 +45,8 @@ app.post("/api/upload", async (req, res) => {
     const storedName = `${crypto.randomUUID()}-${originalName}`; 
     //  console.log(`[POST /api/upload] STEP 4: generated token/storedName`, { token, storedName });
 
-    // 3. Calculate expiration (7 days from now)
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    // 3. Calculate expiration (1 days from now)
+    const expiresAt = new Date(Date.now() + 1 * 24 * 60 * 60 * 1000);
 //  console.log(`[ [POST /api/upload] STEP 5: expiresAt`, expiresAt.toISOString());
     // 4. Save metadata to the database using Prisma
     //  console.log(`[POST /api/upload] STEP 6: prisma.file.create start`);

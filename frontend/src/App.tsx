@@ -43,10 +43,10 @@
 
 // App.tsx
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Header } from "./components/Header";
-import { Footer } from "./components/Footer";
+import  Header  from "./components/Header";
+import  Footer  from "./components/Footer";
 import UploadPage from "./pages/UploadPage";
-import { DownloadPage } from "./pages/DownloadPage";
+import  {DownloadPage}  from "./pages/DownloadPage";
 import { AboutPage } from "./pages/AboutPage";
 import { TermsPage } from "./pages/TermsPage";
 import { PrivacyPage } from "./pages/PrivacyPage";

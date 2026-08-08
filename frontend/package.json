@@ -10,7 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@mantine/core": "^9.5.1",
+    "@mantine/dropzone": "^9.5.1",
+    "@mantine/hooks": "^9.5.1",
     "@tailwindcss/vite": "^4.3.3",
+    "lucide-react": "^1.29.0",
+    "next-themes": "^0.4.6",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-hot-toast": "^2.6.0",

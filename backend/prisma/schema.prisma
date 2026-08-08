@@ -18,7 +18,7 @@ model File {
   passwordHash  String?
   iv            String?
   salt          String?
-  expiresAt     DateTime
+  expiresAt     DateTime      
   downloadCount Int           @default(0)
   maxDownloads  Int?          @default(10)
   isDeleted     Boolean       @default(false)

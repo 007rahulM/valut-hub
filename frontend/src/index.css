@@ -1,5 +1,56 @@
-
-/* @tailwind base;
-@tailwind components;
-@tailwind utilities; */
 @import "tailwindcss";
+
+html { color-scheme: light; }
+html[data-mantine-color-scheme="dark"] { color-scheme: dark; }
+
+/* LIGHT: soft cool-grey page + white cards */
+:root[data-mantine-color-scheme="light"] {
+  --mantine-color-body: #ffffff;
+  --mantine-color-default-border: #e3e9f2;
+  --mantine-color-text: #1c2733;
+  --mantine-color-dimmed: #5c6b7a;
+}
+:root[data-mantine-color-scheme="light"] body { background: #f5f8fc; }
+
+/* DARK: deep navy page + lighter navy cards = layered, real dark feel */
+:root[data-mantine-color-scheme="dark"] {
+  --mantine-color-body: #121a28;
+  --mantine-color-default-border: #26334a;
+  --mantine-color-text: #e8eef6;
+  --mantine-color-dimmed: #93a4b8;
+}
+:root[data-mantine-color-scheme="dark"] body { background: #0b1220; }
+
+/* plain underlined links (Share another file, etc.) */
+.link-plain {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  color: var(--mantine-color-dimmed);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.link-plain:hover { color: var(--mantine-color-text); }
+
+/* dark-mode compatibility for older Tailwind pages (legal, etc.) */
+[data-mantine-color-scheme="dark"] .bg-white { background-color: #121a28; }
+[data-mantine-color-scheme="dark"] .bg-gray-50,
+[data-mantine-color-scheme="dark"] .bg-slate-50 { background-color: #0b1220; }
+[data-mantine-color-scheme="dark"] .border-gray-200,
+[data-mantine-color-scheme="dark"] .border-gray-100 { border-color: #26334a; }
+[data-mantine-color-scheme="dark"] .text-gray-900 { color: #e8eef6; }
+[data-mantine-color-scheme="dark"] .text-gray-800 { color: #d5dee9; }
+[data-mantine-color-scheme="dark"] .text-gray-700 { color: #a8b7cb; }
+[data-mantine-color-scheme="dark"] .text-gray-600 { color: #8496ad; }
+[data-mantine-color-scheme="dark"] .text-gray-500 { color: #64768d; }
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.mantine-Card-root { animation: fadeInUp 0.35s ease both; }
+@media (prefers-reduced-motion: reduce) {
+  .mantine-Card-root { animation: none; }
+}

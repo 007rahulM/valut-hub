@@ -7,7 +7,7 @@
 
 // frontend/src/lib/api.ts
 
-const API_BASE = import.meta.env.VITE_API_URL;
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 // Step 1: Send metadata to backend to get the presigned URL
 export async function requestUploadUrl(metadata: {
@@ -36,8 +36,9 @@ export async function requestUploadUrl(metadata: {
   return result;
 }
 
+
 // Step 3: Upload the file directly to S3 using the presigned URL
-export async function uploadFileToS3(presignedUrl: string, file: File) {
+export async function uploadFileToS3(presignedUrl: string, file: File, signal?: AbortSignal) {
   // console.log("[api.ts][uploadFileToS3][STEP 1] start", {
     // presignedUrl,
     // fileName: file.name,
@@ -50,6 +51,7 @@ export async function uploadFileToS3(presignedUrl: string, file: File) {
     headers: {
       "Content-Type": file.type,
     },
+     signal,
   });
 
   // console.log("[api.ts][uploadFileToS3][STEP 2] response status:", response.status);

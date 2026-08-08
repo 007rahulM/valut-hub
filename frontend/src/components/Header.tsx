@@ -24,30 +24,69 @@
 // }
 
 
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { ActionIcon, Box, Group, Menu, Text, Tooltip } from "@mantine/core";
+import { Menu as MenuIcon } from "lucide-react";
+import { Logo } from "./Logo";
 
-// components/Header.tsx
-import { Link, useLocation } from "react-router-dom";
+const links = [
+  { to: "/", label: "Upload", tip: "Send a file." },
+  { to: "/how", label: "How it works", tip: "Four simple steps." },
+  { to: "/faq", label: "FAQ", tip: "Quick answers." },
+  { to: "/about", label: "About", tip: "Why VaultHub." },
+  { to: "/terms", label: "Terms", tip: "The rules." },
+  { to: "/privacy", label: "Privacy", tip: "What we store." },
+];
 
 export function Header() {
   const location = useLocation();
-  const isActive = (path: string) => location.pathname === path;
+  const navigate = useNavigate();
 
   return (
-    <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200/80 sticky top-0 z-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 text-xl font-bold text-blue-600">
-          <span className="bg-blue-600 text-white px-2 py-1 rounded-lg text-sm">VH</span>
-          VaultHub
-        </Link>
-        <nav className="flex items-center gap-4 text-sm">
-          <Link to="/" className={`font-medium transition-colors ${isActive("/") ? "text-blue-600" : "text-slate-600 hover:text-blue-600"}`}>Upload</Link>
-          <Link to="/how" className={`font-medium transition-colors ${isActive("/how") ? "text-blue-600" : "text-slate-600 hover:text-blue-600"}`}>How it works</Link>
-          <Link to="/about" className={`font-medium transition-colors ${isActive("/about") ? "text-blue-600" : "text-slate-600 hover:text-blue-600"}`}>About</Link>
-          <Link to="/faq" className={`font-medium transition-colors ${isActive("/faq") ? "text-blue-600" : "text-slate-600 hover:text-blue-600"}`}>FAQ</Link>
-          <Link to="/terms" className={`font-medium transition-colors ${isActive("/terms") ? "text-blue-600" : "text-slate-600 hover:text-blue-600"}`}>Terms</Link>
-          <Link to="/privacy" className={`font-medium transition-colors ${isActive("/privacy") ? "text-blue-600" : "text-slate-600 hover:text-blue-600"}`}>Privacy</Link>
-        </nav>
-      </div>
-    </header>
+    <Box
+      px="md" py="xs"
+      style={{
+        position: "sticky", top: 0, zIndex: 40,
+        borderBottom: "1px solid var(--mantine-color-default-border)",
+        background: "color-mix(in srgb, var(--mantine-color-body) 85%, transparent)",
+        backdropFilter: "blur(8px)",
+      }}
+    >
+      <Group justify="space-between">
+        <Link to="/" style={{ textDecoration: "none" }}><Logo /></Link>
+
+        <Group gap="lg" visibleFrom="md">
+          {links.map((l) => (
+            <Tooltip key={l.to} label={l.tip} events={{ hover: true, focus: true, touch: true }}>
+              <Text
+                component={Link} to={l.to} fz="sm"
+                fw={location.pathname === l.to ? 700 : 500}
+                c={location.pathname === l.to ? "var(--mantine-color-brand-6)" : "dimmed"}
+                style={{ textDecoration: "none" }}
+              >
+                {l.label}
+              </Text>
+            </Tooltip>
+          ))}
+        </Group>
+
+        <Box hiddenFrom="md">
+          <Menu shadow="md" width={220} position="bottom-end">
+            <Menu.Target>
+              <ActionIcon variant="default" radius="md" size="lg" aria-label="Open menu">
+                <MenuIcon size={18} />
+              </ActionIcon>
+            </Menu.Target>
+            <Menu.Dropdown>
+              {links.map((l) => (
+                <Menu.Item key={l.to} onClick={() => navigate(l.to)}>{l.label}</Menu.Item>
+              ))}
+            </Menu.Dropdown>
+          </Menu>
+        </Box>
+      </Group>
+    </Box>
   );
 }
+
+export default Header;
