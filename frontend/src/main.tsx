@@ -26,7 +26,7 @@ const theme = createTheme({
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-<MantineProvider theme={theme} defaultColorScheme="auto">
+<MantineProvider theme={theme} defaultColorScheme="light">
       <Toaster position="top-center" />
       <App />
     </MantineProvider>
