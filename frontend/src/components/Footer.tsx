@@ -55,7 +55,7 @@ export function Footer() {
           <Stack gap={4} align="flex-start">
             <Text fz={11} fw={700} tt="uppercase" c="dimmed">Contact</Text>
             {/* TODO: replace with your real email */}
-            <Anchor href="mailto:CONTACT_EMAIL_HERE" fz="sm" c="dimmed" underline="never">CONTACT_EMAIL_HERE</Anchor>
+            <Anchor href="mailto:rk096327945@gmail.com" fz="sm" c="dimmed" underline="never">rk096327945@gmail.com</Anchor>
           </Stack>
         </Group>
 

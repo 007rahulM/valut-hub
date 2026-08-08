@@ -174,7 +174,7 @@ export function TermsPage() {
 
         <section>
           <h2 className="text-xl font-semibold text-gray-800">7. Questions?</h2>
-          <p>We're happy to help: <a href="mailto:CONTACT_EMAIL_HERE" className="text-blue-600 hover:underline font-medium">CONTACT_EMAIL_HERE</a></p>
+          <p>We're happy to help: <a href="mailto:rk096327945@gmail.com" className="text-blue-600 hover:underline font-medium">rk096327945@gmail.com</a></p>
         </section>
       </div>
     </PageShell>

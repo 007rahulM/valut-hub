@@ -218,7 +218,7 @@ export function PrivacyPage() {
 
         <section>
           <h2 className="text-xl font-semibold text-gray-800">11. Contact</h2>
-          <p>Privacy questions: <a href="mailto:CONTACT_EMAIL_HERE" className="text-blue-600 hover:underline font-medium">CONTACT_EMAIL_HERE</a></p>
+          <p>Privacy questions: <a href="mailto:Crk096327945@gmail.com" className="text-blue-600 hover:underline font-medium">rk096327945@gmail.com</a></p>
         </section>
       </div>
     </PageShell>
