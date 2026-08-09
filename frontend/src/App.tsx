@@ -55,6 +55,8 @@ import { HowItWorksPage } from "./pages/HowItWorksPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { Toaster } from "react-hot-toast";   
 import{ CookiePolicy} from "./pages/CookiePolicy";
+import { FeedbackPage } from "./pages/FeedbackPage";
+import MobileNav from "./components/MobileNav";
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -64,6 +66,7 @@ function Layout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       <Footer />
+      <MobileNav />
     
 <Toaster position="top-center" toastOptions={{ duration: 3000 }} />
     </div>
@@ -82,6 +85,7 @@ function App() {
         <Route path="/faq" element={<Layout><FAQPage /></Layout>} />
         <Route path="/how" element={<Layout><HowItWorksPage /></Layout>} />
         <Route path="/cookies" element={<Layout><CookiePolicy /></Layout>} />
+        <Route path="/feedback" element={<Layout><FeedbackPage /></Layout>} />
         <Route path="*" element={<Layout><NotFoundPage /></Layout>} />
       </Routes>
     </BrowserRouter>

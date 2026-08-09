@@ -10,6 +10,7 @@ import App from "./App";
 const theme = createTheme({
   primaryColor: "brand",
   defaultRadius: "md",
+  fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   colors: {
     brand: [
       "#FFF4EF", "#FFE4D8", "#FDC9B2", "#F9A57E", "#F58352",

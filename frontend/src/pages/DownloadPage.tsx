@@ -1,10 +1,23 @@
-// import { useState, useEffect } from "react";
-// import { useParams } from "react-router-dom";
-// import { fetchFileMetadata, requestDownloadUrl } from "../lib/api";
-// import { triggerDownload, triggerDownloadFromArrayBuffer } from "../lib/download";
-// import { decryptFile } from "../lib/crypto";
-// import toast, { Toaster } from "react-hot-toast"; 
 
+// // ============================================================
+
+// import { useEffect, useRef, useState } from "react";
+// import { Link, useParams } from "react-router-dom";
+// import toast from "react-hot-toast";
+// import { Box, Button, Card, Container, Group, Loader, Paper, PasswordInput, Progress, SimpleGrid, Stack, Text, Title } from "@mantine/core";
+// import { Download as DownloadIcon, Lock, ShieldCheck } from "lucide-react";
+// import { Illustration } from "../components/Illustration";
+// import { InfoBanner } from "../components/InfoBanner";
+// import { LinkExpiredCard } from "../components/download/LinkExpiredCard";
+// import { ConnectionLostCard } from "../components/download/ConnectionLostCard";
+// import { fetchFileMetadata, requestDownloadUrl } from "../lib/api";
+// import { downloadBlobWithProgress, triggerDownloadFromBlob, triggerDownloadFromArrayBuffer } from "../lib/download";
+// import { decryptFile } from "../lib/crypto";
+// import { DownloadCompleteCard } from "../components/download/DownloadCompleteCard";
+
+// // ============================================================
+// // TYPES: Shape of file metadata from backend
+// // ============================================================
 // interface FileMetadata {
 //   originalName: string;
 //   mimeType: string;
@@ -14,286 +27,348 @@
 //   downloadCount: number;
 // }
 
+// // ============================================================
+// // ERROR CLASSIFICATION: Figure out WHAT failed so we show the RIGHT card
+// // ============================================================
+// type ErrorKind = "network" | "server" | "expired";
+
+// function classifyError(err: unknown): ErrorKind {
+//   const e = err as { response?: { status?: number }; code?: string; message?: string };
+//   const status = e?.response?.status;
+
+//   // 404/410 from backend = link expired, used up, or never existed
+//   if (status === 404 || status === 410) return "expired";
+
+//   // 5xx from backend = our server problem (retry-able)
+//   if (status && status >= 500) return "server";
+
+//   const msg = `${e?.message ?? ""} ${e?.code ?? ""}`;
+
+//   // Check error message for "expired" keywords
+//   if (/404|410|expired|not found|no such/i.test(msg)) return "expired";
+
+//   // No status code + network keywords = user's internet problem (retry-able)
+//   if (!status && /network|fetch|offline|connection|econn|enotfound|timeout/i.test(msg)) return "network";
+
+//   // Browser says we're offline
+//   if (!status && typeof navigator !== "undefined" && !navigator.onLine) return "network";
+
+//   // Fallback: assume server problem
+//   return "server";
+// }
+
+// // ============================================================
+// // HELPERS
+// // ============================================================
+
+// // Human-readable file size (430.25 KB, 2.2 MB, ...)
 // function formatFileSize(bytes: number): string {
 //   if (bytes === 0) return "0 Bytes";
-//   const k = 1024;
-//   const sizes = ["Bytes", "KB", "MB", "GB"];
+//   const k = 1024, sizes = ["Bytes", "KB", "MB", "GB"];
 //   const i = Math.floor(Math.log(bytes) / Math.log(k));
 //   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 // }
 
+// // Tiny label/value pair used in the SIZE / EXPIRES / ENCRYPTED / DOWNLOADS grid
+// function Detail({ label, value }: { label: string; value: string }) {
+//   return (
+//     <div>
+//       <Text fz={10} c="dimmed" tt="uppercase" fw={600}>{label}</Text>
+//       <Text fz="sm" fw={500} mt={2}>{value}</Text>
+//     </div>
+//   );
+// }
+
+// // ============================================================
+// // MAIN COMPONENT
+// // ============================================================
 // export function DownloadPage() {
+//   // Get the token from the URL (e.g., /file/abc123 → token = "abc123")
 //   const { token } = useParams<{ token: string }>();
 
-//   // ===== ALL STATES INSIDE THE COMPONENT =====
-//   const [file, setFile] = useState<FileMetadata | null>(null);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState<string | null>(null);
-//   const [password, setPassword] = useState("");
-//   const [downloading, setDownloading] = useState(false);
-//   const [downloadError, setDownloadError] = useState<string | null>(null);
+//   // ============================================================
+//   // STATE: What's happening right now
+//   // ============================================================
+//   const [file, setFile] = useState<FileMetadata | null>(null); // File metadata from backend
+//   const [loading, setLoading] = useState<boolean>(() => !!token); // Start loading if we have a token
+//   const [errorKind, setErrorKind] = useState<ErrorKind | null>(token ? null : "expired"); // What went wrong (if anything)
+//   const [attempt, setAttempt] = useState(0); // Increment to retry fetch
+//   const [password, setPassword] = useState(""); // User's password input (for encrypted files)
+//   const [unlocked, setUnlocked] = useState(false); // Did they click "Unlock"?
+//   const [downloading, setDownloading] = useState(false); // Is the download in progress?
+//   const [complete, setComplete] = useState(false); // Did the download finish successfully?
 
-//   // ===== LOAD FILE METADATA WHEN PAGE OPENS =====
+//   // Download progress tracking (what your users asked for)
+//   const [dlProgress, setDlProgress] = useState<number | null>(null); // 0-100 percentage
+//   const [dlSlow, setDlSlow] = useState(false); // Should we show "slow connection" message?
+//   const dlStartRef = useRef(0); // Timestamp when download started (to detect slowness)
+
+//   // ============================================================
+//   // EFFECT: Fetch file metadata when the page loads
+//   // ============================================================
 //   useEffect(() => {
-//     async function loadFile() {
-//       if (!token) {
-//         setError("No file token provided");
-//         setLoading(false);
-//         return;
-//       }
-//       try {
-//         setLoading(true);
-//         setError(null);
-//         const response = await fetchFileMetadata(token);
-//         setFile(response);
-//       } catch (err) {
-//         setError(err instanceof Error ? err.message : "Failed to load file");
-//       } finally {
-//         setLoading(false);
-//       }
-//     }
-//     loadFile();
-//   }, [token]);
+//     if (!token) return; // No token = show expired card immediately
+//     let cancelled = false; // Ignore results if user leaves mid-fetch
 
-//   // ===== HANDLE DOWNLOAD BUTTON CLICK =====
+//     fetchFileMetadata(token)
+//       .then((data) => {
+//         if (!cancelled) {
+//           setFile(data);        // Valid link → show the download UI
+//           setErrorKind(null);
+//           setLoading(false);
+//         }
+//       })
+//       .catch((err) => {
+//         if (!cancelled) {
+//           setErrorKind(classifyError(err)); // Decide WHICH error card to show
+//           setLoading(false);
+//         }
+//       });
+
+//     return () => { cancelled = true; }; // Cleanup: ignore late results
+//   }, [token, attempt]); // Re-run when token or attempt changes
+
+//   // "Try again" button on the Connection Lost card
+//   const retry = () => {
+//     setLoading(true);
+//     setErrorKind(null);
+//     setAttempt((a) => a + 1); // Increment attempt → effect re-runs
+//   };
+
+//   // ============================================================
+//   // DOWNLOAD HANDLER: User clicked "Download"
+//   // ============================================================
 //   const handleDownload = async () => {
-//     // console.log("Step 1: Button clicked, requesting download URL...");
-//     // console.log("token:", token);
-//     // console.log("file:", file);
-    
-//     if (!token || !file) {
-//       // console.log("step 2 : missing token or file, stopping");
+//     if (!token || !file) return;
+
+//     // Fail fast if the device is already offline
+//     if (!navigator.onLine) {
+//       toast.error("You're offline — check your internet and try again.");
 //       return;
 //     }
-//     // console.log("Step 2: token and file exist");
+
 //     setDownloading(true);
-//     setDownloadError(null);
+//     setDlProgress(0);
+//     setDlSlow(false);
+//     dlStartRef.current = Date.now();
+
+//     // Progress callback: update percentage + detect slowness
+//     const onProg = (p: number | null) => {
+//       if (p !== null) {
+//         setDlProgress(p);
+//         // If 5 seconds passed and we're still below 90%, it's slow
+//         if (Date.now() - dlStartRef.current > 5000 && p < 90) setDlSlow(true);
+//       }
+//     };
 
 //     try {
-//       // console.log("step 3: calling requestDownloadUrl...");
-//       // const result = await requestDownloadUrl(
-//       //   token,
-//       //   file.isEncrypted ? password : undefined
-//       // );
-//       // console.log("step 4: got result:", result);
+//       // STEP 1: Ask backend for a presigned S3 download URL
+//       const d = await requestDownloadUrl(token, file.isEncrypted ? password : undefined);
 
-//       // 1. Store the internal data wrapper into an object
-//       const downloadData = await requestDownloadUrl(
-//         token,
-//         file.isEncrypted ? password:undefined
-//       );
-// // console.log("step 4: got downloadData:", downloadData);
+//       // STEP 2: Download the file with progress tracking
+//       const blob = await downloadBlobWithProgress(d.downloadUrl, onProg);
 
-//       if (!downloadData.isEncrypted) {
-//         // console.log("step 5: file not encrypted, triggering download");
-//         // console.log("URL:", downloadData.downloadUrl);
-//         // console.log("Filename:", downloadData.originalName);
-        
-//         // 2. Pass the nested data parameters to your trigger function
-//         triggerDownload(downloadData.downloadUrl, downloadData.originalName);
-//          toast.success("Download started!"); 
-//         // console.log("step 6: triggeredDownload called");
+//       if (!d.isEncrypted) {
+//         // Plain file → save blob to disk
+//         triggerDownloadFromBlob(blob, d.originalName);
+//         toast.success("Download started!");
 //       } else {
-//         // Encrypted file workflow
-//         // console.log("File is encrypted, Downloading and decrypting...");
-        
-//         // 3. Fetch from nested object URL
-//         const encryptedResponse = await fetch(downloadData.downloadUrl);
-//         if (!encryptedResponse.ok) {
-//           throw new Error("Failed to download encrypted file from S3");
-//         }
-        
-//         const encryptedData = await encryptedResponse.arrayBuffer();
-//         // console.log("Downloaded encrypted file from S3");
-
-//         // 4. Verify nested encryption properties
-//         if (!downloadData.salt || !downloadData.iv) {
-//           throw new Error("Missing encryption parameters");
-//         }
-
-//         const decryptedData = await decryptFile(
-//           encryptedData,
-//           password,
-//           downloadData.salt,
-//           downloadData.iv
-//         );
-//         // console.log("Decryption was successful");
-
-//         triggerDownloadFromArrayBuffer(
-//           decryptedData,
-//           downloadData.originalName,
-//           downloadData.mimeType
-//         );
-//            toast.success("File decrypted and download started!"); 
-//         // console.log("File saved to Downloads Folder");
+//         // Encrypted file → decrypt first, then save
+//         if (!d.salt || !d.iv) throw new Error("Missing encryption parameters");
+//         const data = await blob.arrayBuffer();
+//         const decrypted = await decryptFile(data, password, d.salt, d.iv);
+//         triggerDownloadFromArrayBuffer(decrypted, d.originalName, d.mimeType);
+//         toast.success("File decrypted!");
 //       }
+
+//       setComplete(true); // Show the DownloadCompleteCard
 //     } catch (err) {
-//       // console.log("Error in try block:", err);
-//    // Set local download error (keeps page intact)
-//       const message = err instanceof Error ? err.message : "Download failed";
-//       setDownloadError(message);
-//       toast.error(message);
+//       toast.error(err instanceof Error ? err.message : "Download failed");
+//       setUnlocked(false); // Let them re-enter the password and retry
 //     } finally {
-//       // console.log("finally block running");
 //       setDownloading(false);
+//       setDlProgress(null);
 //     }
 //   };
 
-//   // ========== LOADING STATE ==========
-//   if (loading) {
-//     return (
-//       <div className="min-h-screen flex items-center justify-center bg-white-100">
-//         <div className="text-center">
-//           <div className="w-10 h-10 border-4 border-gray-200 border-t-blue-600 rounded-full mx-auto mb-4 animate-spin" />
-//           <p className="text-gray-500 text-sm m-0">Loading file...</p>
-//         </div>
-//       </div>
-//     );
-//   }
-
-//   // ========== ERROR STATE ==========
-//   if (error) {
-//     return (
-//       <div className="min-h-screen flex items-center justify-center bg-white-100">
-//         <div className="p-6 bg-red-50 border border-red-200 rounded-lg text-center">
-//           <p className="text-red-600 text-sm">{error}</p>
-//         </div>
-//       </div>
-//     );
-//   }
-
-//   // ========== MAIN PAGE ==========
+//   // ============================================================
+//   // RENDER: Show the right card based on current state
+//   // ============================================================
 //   return (
-//     <div className="min-h-screen bg-white-100 py-12 px-4">
-//       <Toaster position="top-center" />   {/* <-- Toast container */}
-//       <div className="max-w-md mx-auto bg-white rounded-xl p-8 border border-gray-200">
-//         {/* File Header */}
-//         <div className="flex items-center gap-4 pb-6 mb-6 border-b border-gray-200">
-//           <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center text-2xl">
-//             📄
-//           </div>
-//           <div>
-//             <h1 className="text-lg font-semibold text-gray-900 mb-1">
-//               {file?.originalName}
-//             </h1>
-//             <p className="text-sm text-gray-500 m-0">{file?.mimeType}</p>
-//           </div>
-//         </div>
+//     <Container size="xs" py="xl">
+//       {/* ---------- LOADING ---------- */}
+//       {loading && (
+//         <Card withBorder shadow="sm" radius="lg" p="xl">
+//           <Stack align="center" gap="md">
+//             <Loader color="var(--mantine-color-brand-6)" />
+//             <Text fz="sm" c="dimmed">Loading file...</Text>
+//           </Stack>
+//         </Card>
+//       )}
 
-//         {/* File Details Grid */}
-//         <div className="grid grid-cols-2 gap-4 mb-6">
-//           <DetailItem label="Size" value={formatFileSize(file?.sizeBytes || 0)} />
-//           <DetailItem label="Expires" value={file?.expiresAt?.split("T")[0] || ""} />
-//           <DetailItem label="Encrypted" value={file?.isEncrypted ? "Yes" : "No"} />
-//           <DetailItem label="Downloads" value={String(file?.downloadCount || 0)} />
-//         </div>
+//       {/* ---------- INTERNET / SERVER PROBLEM (retry-able) ---------- */}
+//       {!loading && errorKind === "network" && (
+//         <ConnectionLostCard variant="network" onRetry={retry} />
+//       )}
+//       {!loading && errorKind === "server" && (
+//         <ConnectionLostCard variant="server" onRetry={retry} />
+//       )}
 
-           
+//       {/* ---------- EXPIRED / USED UP / NEVER EXISTED (permanent) ---------- */}
+//       {!loading && errorKind === "expired" && <LinkExpiredCard />}
 
-//         {/* Password Input */}
-//         {file?.isEncrypted && (
-//           <div className="mb-6">
-//             <label className="block text-sm font-medium text-gray-700 mb-2">
-//               Password
-//             </label>
-//             <input
-//               type="password"
-//               placeholder="Enter password to decrypt"
-//               value={password}
-//               onChange={(e) => setPassword(e.target.value)}
-//               className="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-//             />
-//           </div>
-//         )}
+//       {/* ---------- DOWNLOAD COMPLETE ---------- */}
+//       {!loading && !errorKind && complete && (
+//         <Card radius="lg" p={0} withBorder style={{ overflow: "hidden" }}>
+//           <DownloadCompleteCard />
+//         </Card>
+//       )}
 
-//         {/* Download Button */}
-//         <button
-//           onClick={handleDownload}
-//           disabled={downloading || (file?.isEncrypted && !password)}
-//           className="w-full p-3 bg-blue-600 disabled:bg-blue-300 text-white border-none rounded-lg text-sm font-medium disabled:cursor-not-allowed disabled:opacity-70 hover:bg-blue-700 transition-colors"
-//         >
-//           {downloading ? "Downloading..." : "Download File"}
-//         </button>
+//       {/* ---------- MAIN DOWNLOAD UI ---------- */}
+//       {!loading && !errorKind && file && !complete && (
+//         <Card radius="lg" p={0} withBorder style={{ overflow: "hidden" }}>
+//           {/* Brand-orange banner */}
+//           <Box bg="var(--mantine-color-brand-filled)" p="md">
+//             <Group>
+//               <DownloadIcon color="white" size={20} />
+//               <div>
+//                 <Title order={3} c="white">Download files</Title>
+//                 <Text fz="xs" c="white">Shared securely with VaultHub</Text>
+//               </div>
+//             </Group>
+//           </Box>
 
-//            {/* Local download error – displayed only below the button */}
-//         {downloadError && (
-//           <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-//             {downloadError}
-//           </div>
-//         )}
+//           <Stack gap="md" p="xl">
+//             <Illustration src="/illustrations/download.svg" alt="Downloading a file" maxWidth={200} />
 
-//         {/* Token */}
-//         <p className="mt-6 text-center text-xs text-gray-300">
-//           Token: {token}
-//         </p>
-//       </div>
-//     </div>
+//             {/* File identity row */}
+//             <Group gap="sm" wrap="nowrap">
+//               <Paper w={40} h={40} radius="md" bg="var(--mantine-color-blue-light)" c="blue"
+//                 style={{ display: "grid", placeItems: "center", flexShrink: 0 }}>
+//                 <DownloadIcon size={20} />
+//               </Paper>
+//               <div style={{ minWidth: 0 }}>
+//                 <Text fw={600} lineClamp={1}>{file.originalName}</Text>
+//                 <Text fz="xs" c="dimmed">{file.mimeType}</Text>
+//               </div>
+//             </Group>
+
+//             {/* The facts grid */}
+//             <SimpleGrid cols={2}>
+//               <Detail label="Size" value={formatFileSize(file.sizeBytes)} />
+//               <Detail label="Expires" value={file.expiresAt?.split("T")[0] ?? ""} />
+//               <Detail label="Encrypted" value={file.isEncrypted ? "Yes" : "No"} />
+//               <Detail label="Downloads" value={String(file.downloadCount ?? 0)} />
+//             </SimpleGrid>
+
+//             {/* Encrypted? Ask for the password first */}
+//             {file.isEncrypted && !unlocked && (
+//               <Stack gap="sm">
+//                 <InfoBanner>
+//                   This file is locked. Enter the password the sender shared with you —
+//                   we never store it and can't recover it.
+//                 </InfoBanner>
+//                 <Text fz="sm" fw={500}>
+//                   <Lock size={14} style={{ verticalAlign: -2 }} /> Password required
+//                 </Text>
+//                 <PasswordInput
+//                   label="Password"
+//                   placeholder="Enter password to unlock"
+//                   value={password}
+//                   onChange={(e) => setPassword(e.currentTarget.value)}
+//                 />
+//                 <Button fullWidth disabled={!password} onClick={() => setUnlocked(true)}>Unlock</Button>
+//               </Stack>
+//             )}
+
+//             {/* Unlocked (or not encrypted) → the real Download button */}
+//             {(!file.isEncrypted || unlocked) && (
+//               <Stack gap="xs">
+//                 <Button fullWidth size="md" loading={downloading} onClick={handleDownload}
+//                   leftSection={<DownloadIcon size={16} />}>
+//                   {downloading && dlProgress !== null ? `Downloading… ${dlProgress}%` : "Download"}
+//                 </Button>
+
+//                 {downloading && dlProgress !== null && (
+//                   <>
+//                     <Progress value={dlProgress} animated size="sm" radius="md" color="brand" mt={4} />
+//                     {dlSlow && (
+//                       <Text fz="xs" c="dimmed">Large file or slow connection — hang tight, it's working.</Text>
+//                     )}
+//                   </>
+//                 )}
+
+//                 {file.isEncrypted && (
+//                   <Button variant="subtle" size="xs" color="gray"
+//                     onClick={() => { setUnlocked(false); setPassword(""); }}>
+//                     Wrong password? Try again
+//                   </Button>
+//                 )}
+//               </Stack>
+//             )}
+//           </Stack>
+
+//           {/* Factual footer strip */}
+//           <Box p="md" style={{ borderTop: "1px solid var(--mantine-color-default-border)" }}>
+//             <Text fz="xs" c="dimmed">
+//               <ShieldCheck size={14} style={{ verticalAlign: -2 }} /> Locked on the sender's device • deleted automatically after 1 day or 10 downloads
+//             </Text>
+//           </Box>
+//         </Card>
+//       )}
+//     </Container>
 //   );
 // }
 
-// function DetailItem({ label, value }: { label: string; value: string }) {
-//   return (
-//     <div>
-//       <p className="text-xs uppercase tracking-wider text-gray-400 font-medium mb-1 m-0">
-//         {label}
-//       </p>
-//       <p className="text-sm text-gray-700 font-medium m-0">{value}</p>
-//     </div>
-//   );
-// }
+// export default DownloadPage;
 
 
 
 // ============================================================
-// DownloadPage — THE RECIPIENT'S VIEW (Firefox Send "Recipients View" flow)
+// DownloadPage — THE RECIPIENT'S VIEW
 //
-// This page handles EVERY possible outcome when someone opens a share link:
-//   1. loading        → spinner card
-//   2. network error  → ConnectionLostCard ("You're offline", retry-able)
-//    3. server error   → ConnectionLostCard ("We'll be right back", retry-able)
-//   4. expired/404/used → LinkExpiredCard (permanent — file is gone forever)
-//   5. ready          → file info + password unlock (if encrypted) + Download
-//   6. complete       → green "Download Complete" confirmation
+// FLOW (state machine):
+//   loading  → skeleton card that mirrors the real layout
+//   network  → ConnectionLostCard("You're offline") + Try again
+//   server   → ConnectionLostCard("We'll be right back") + Try again
+//   expired  → LinkExpiredCard (permanent — file is gone)
+//   complete → DownloadCompleteCard (green strip + ⭐ feedback)
+//   else     → main card: banner → illustration → file facts →
+//               unlock (if encrypted) → Download + live progress
 //
-// NOTE FOR DEVS: expiry is enforced by the BACKEND on every request
-// (it returns 404/410). This page only DISPLAYS what the backend decides.
+// Expiry is enforced by the BACKEND (404/410). We only display it.
 // ============================================================
-
-import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
-import { Box, Button, Card, Container, Group, Loader, Paper, PasswordInput, SimpleGrid, Stack, Text, Title } from "@mantine/core";
+import {
+  Box, Button, Card, Container, Group, Paper, PasswordInput, Progress,
+  SimpleGrid, Skeleton, Stack, Text, Title,
+} from "@mantine/core";
 import { Download as DownloadIcon, Lock, ShieldCheck } from "lucide-react";
 import { Illustration } from "../components/Illustration";
 import { InfoBanner } from "../components/InfoBanner";
 import { LinkExpiredCard } from "../components/download/LinkExpiredCard";
 import { ConnectionLostCard } from "../components/download/ConnectionLostCard";
+import { DownloadCompleteCard } from "../components/download/DownloadCompleteCard";
 import { fetchFileMetadata, requestDownloadUrl } from "../lib/api";
-import { triggerDownloadv2, triggerDownloadFromArrayBuffer } from "../lib/download";
+import { downloadBlobWithProgress, triggerDownloadFromBlob, triggerDownloadFromArrayBuffer } from "../lib/download";
 import { decryptFile } from "../lib/crypto";
 
-// Shape of the metadata the backend sends back for a valid token
+// Shape of the metadata the backend returns for a valid token
 interface FileMetadata {
-  originalName: string;
-  mimeType: string;
-  sizeBytes: number;
-  isEncrypted: boolean;
-  expiresAt: string;
-  downloadCount: number;
+  originalName: string; mimeType: string; sizeBytes: number;
+  isEncrypted: boolean; expiresAt: string; downloadCount: number;
 }
 
-// The 3 failure families we care about
+// The 3 failure families → which card we show
 type ErrorKind = "network" | "server" | "expired";
 
-// Figures out WHAT failed so we can show the RIGHT card:
-//  - 404/410 from backend  → link expired / used up / never existed (permanent)
-//  - 5xx from backend      → our server problem (retry-able)
-//  - fetch throws / offline→ user's internet problem (retry-able)
 function classifyError(err: unknown): ErrorKind {
   const e = err as { response?: { status?: number }; code?: string; message?: string };
   const status = e?.response?.status;
-  if (status === 404 || status === 410) return "expired";
-  if (status && status >= 500) return "server";
+  if (status === 404 || status === 410) return "expired";       // gone forever
+  if (status && status >= 500) return "server";                 // our fault, retry-able
   const msg = `${e?.message ?? ""} ${e?.code ?? ""}`;
   if (/404|410|expired|not found|no such/i.test(msg)) return "expired";
   if (!status && /network|fetch|offline|connection|econn|enotfound|timeout/i.test(msg)) return "network";
@@ -301,7 +376,7 @@ function classifyError(err: unknown): ErrorKind {
   return "server";
 }
 
-// Human-readable file size (430.25 KB, 2.2 MB, ...)
+// Human-readable size (2.2 MB, 430.25 KB…)
 function formatFileSize(bytes: number): string {
   if (bytes === 0) return "0 Bytes";
   const k = 1024, sizes = ["Bytes", "KB", "MB", "GB"];
@@ -309,7 +384,7 @@ function formatFileSize(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }
 
-// Tiny label/value pair used in the SIZE / EXPIRES / ENCRYPTED / DOWNLOADS grid
+// One label/value cell in the facts grid
 function Detail({ label, value }: { label: string; value: string }) {
   return (
     <div>
@@ -320,150 +395,109 @@ function Detail({ label, value }: { label: string; value: string }) {
 }
 
 export function DownloadPage() {
-  const { token } = useParams<{ token: string }>();
+  const { token } = useParams<{ token: string }>(); // /file/abc123 → "abc123"
 
   const [file, setFile] = useState<FileMetadata | null>(null);
-
-  // Loading starts TRUE only when we actually have a token to fetch.
   const [loading, setLoading] = useState<boolean>(() => !!token);
-
-  // No token at all → the link can't exist → show the expired card immediately.
   const [errorKind, setErrorKind] = useState<ErrorKind | null>(token ? null : "expired");
-
-  // Bump this number to retry the fetch without remounting the page.
-  const [attempt, setAttempt] = useState(0);
-
+  const [attempt, setAttempt] = useState(0);        // bump to retry
   const [password, setPassword] = useState("");
   const [unlocked, setUnlocked] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [complete, setComplete] = useState(false);
+  const [dlProgress, setDlProgress] = useState<number | null>(null);
+  const [dlSlow, setDlSlow] = useState(false);
+  const dlStartRef = useRef(0);
 
-  // STEP 1: ask the backend for this file's metadata.
-  // IMPORTANT (lint fix): every setState lives inside .then/.catch callbacks
-  // (async), NEVER synchronously in the effect body — this is what keeps the
-  // react-hooks "set-state-in-effect" rule happy.
+  // Fetch metadata on open; classify failures into the right card
   useEffect(() => {
-    if (!token) return; // nothing to fetch — UI already shows the expired card
-    let cancelled = false; // ignore late results if the user leaves mid-fetch
-
+    if (!token) return;
+    let cancelled = false;
     fetchFileMetadata(token)
-      .then((data) => {
-        if (cancelled) return;
-        setFile(data);        // valid link → show the download UI
-        setErrorKind(null);
-        setLoading(false);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        setErrorKind(classifyError(err)); // decide WHICH error card to show
-        setLoading(false);
-      });
-
+      .then((data) => { if (!cancelled) { setFile(data); setErrorKind(null); setLoading(false); } })
+      .catch((err) => { if (!cancelled) { setErrorKind(classifyError(err)); setLoading(false); } });
     return () => { cancelled = true; };
   }, [token, attempt]);
 
-  // "Try again" button on the Connection Lost card.
-  // setState here is fine — event handlers are allowed to set state.
-  const retry = () => {
-    setLoading(true);
-    setErrorKind(null);
-    setAttempt((a) => a + 1); // effect re-runs because `attempt` changed
-  };
+  const retry = () => { setLoading(true); setErrorKind(null); setAttempt((a) => a + 1); };
 
-  // STEP 2: user pressed Download → backend verifies password/limits,
-  // then hands us a short-lived presigned S3 URL.
+  // Download button: presigned URL → blob (with progress) → decrypt if needed → save
   const handleDownload = async () => {
     if (!token || !file) return;
+    if (!navigator.onLine) { toast.error("You're offline — check your internet and try again."); return; }
 
-    // Fail fast if the device is already offline (no fake "success" ever).
-    if (!navigator.onLine) {
-      toast.error("You're offline — check your internet and try again.");
-      return;
-    }
+    setDownloading(true); setDlProgress(0); setDlSlow(false);
+    dlStartRef.current = Date.now();
+    const onProg = (p: number | null) => {
+      if (p !== null) {
+        setDlProgress(p);
+        if (Date.now() - dlStartRef.current > 5000 && p < 90) setDlSlow(true);
+      }
+    };
 
-    setDownloading(true);
     try {
       const d = await requestDownloadUrl(token, file.isEncrypted ? password : undefined);
+      const blob = await downloadBlobWithProgress(d.downloadUrl, onProg);
 
       if (!d.isEncrypted) {
-        // Plain file → download straight from S3 (blob validated inside triggerDownloadv2)
-        triggerDownloadv2(d.downloadUrl, d.originalName);
+        triggerDownloadFromBlob(blob, d.originalName);
         toast.success("Download started!");
       } else {
-        // Encrypted file → fetch the locked bytes, unlock them LOCALLY in the browser
-        const res = await fetch(d.downloadUrl);
-        if (!res.ok) throw new Error("Failed to fetch encrypted file");
-        const data = await res.arrayBuffer();
         if (!d.salt || !d.iv) throw new Error("Missing encryption parameters");
+        const data = await blob.arrayBuffer();
         const decrypted = await decryptFile(data, password, d.salt, d.iv);
         triggerDownloadFromArrayBuffer(decrypted, d.originalName, d.mimeType);
         toast.success("File decrypted!");
       }
-      setComplete(true); // only reached when everything really succeeded
+      setComplete(true);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Download failed");
-      setUnlocked(false); // let them re-enter the password and retry
+      setUnlocked(false);
     } finally {
       setDownloading(false);
+      setDlProgress(null);
     }
   };
 
   return (
-    <Container size="xs" py="xl">
-      {/* ---------- LOADING ---------- */}
+    <Container size="xs" py={{ base: "md", sm: "xl" }}>
+      {/* ---------- LOADING: skeleton that mirrors the real card ---------- */}
       {loading && (
-        <Card withBorder shadow="sm" radius="lg" p="xl">
-          <Stack align="center" gap="md">
-            <Loader color="var(--mantine-color-blue-6)" />
-            <Text fz="sm" c="dimmed">Loading file...</Text>
+        <Card withBorder shadow="sm" radius="lg" p={{ base: "md", sm: "xl" }}>
+          <Stack gap="md">
+            <Group gap="sm" wrap="nowrap">
+              <Skeleton height={40} width={40} radius="md" />
+              <Stack gap={8} style={{ flex: 1 }}>
+                <Skeleton height={12} width="55%" />
+                <Skeleton height={10} width="35%" />
+              </Stack>
+            </Group>
+            <SimpleGrid cols={2} spacing="sm">
+              <Skeleton height={38} /><Skeleton height={38} />
+              <Skeleton height={38} /><Skeleton height={38} />
+            </SimpleGrid>
+            <Skeleton height={44} radius="md" />
           </Stack>
         </Card>
       )}
 
-      {/* ---------- INTERNET / SERVER PROBLEM (retry-able) ---------- */}
-      {!loading && errorKind === "network" && (
-        <ConnectionLostCard variant="network" onRetry={retry} />
-      )}
-      {!loading && errorKind === "server" && (
-        <ConnectionLostCard variant="server" onRetry={retry} />
-      )}
-
-      {/* ---------- EXPIRED / USED UP / NEVER EXISTED (permanent) ---------- */}
+      {/* ---------- FAILURE CARDS ---------- */}
+      {!loading && errorKind === "network" && <ConnectionLostCard variant="network" onRetry={retry} />}
+      {!loading && errorKind === "server" && <ConnectionLostCard variant="server" onRetry={retry} />}
       {!loading && errorKind === "expired" && <LinkExpiredCard />}
 
-      {/* ---------- DOWNLOAD COMPLETE ---------- */}
+      {/* ---------- SUCCESS ---------- */}
       {!loading && !errorKind && complete && (
         <Card radius="lg" p={0} withBorder style={{ overflow: "hidden" }}>
-          {/* Slim green success strip (not a giant banner) */}
-          <Group gap={8} px="lg" py={10} bg="var(--mantine-color-green-light)">
-            <Text fz="sm" fw={700} c="var(--mantine-color-green-7)">✓ Download Complete</Text>
-            <Text fz="xs" c="dimmed" ml="auto">saved to your device</Text>
-          </Group>
-          <Stack p="xl" gap="md" align="center">
-            <Illustration src="/illustrations/successful-upload.svg" alt="Download complete" maxWidth={150} />
-            <Text fz="sm" c="dimmed" ta="center">
-              You can now close this window. The link keeps working until it expires
-              or reaches its download limit.
-            </Text>
-            {/* Friendly nudge: turn this happy downloader into a sender */}
-            <Stack gap={10} align="center" mt={4}>
-              <Text fz="sm" c="dimmed" ta="center" maw={420}>
-                That was easy, right? Next time you need to send something —
-                big or small — VaultHub is free, private and needs no account.
-              </Text>
-              <Button component={Link} to="/" leftSection={<DownloadIcon size={16} />}>
-                Send a file — it's free
-              </Button>
-            </Stack>
-          </Stack>
+          <DownloadCompleteCard />
         </Card>
       )}
 
       {/* ---------- MAIN DOWNLOAD UI ---------- */}
       {!loading && !errorKind && file && !complete && (
         <Card radius="lg" p={0} withBorder style={{ overflow: "hidden" }}>
-          {/* Slim blue brand banner */}
-          <Box bg="var(--mantine-color-blue-filled)" p="md">
+          {/* Brand banner: the only orange on this page (it's an action page) */}
+          <Box bg="var(--mantine-color-brand-filled)" p="md">
             <Group>
               <DownloadIcon color="white" size={20} />
               <div>
@@ -473,8 +507,9 @@ export function DownloadPage() {
             </Group>
           </Box>
 
-          <Stack gap="md" p="xl">
-            {/* File identity row */}
+          <Stack gap="md" p={{ base: "md", sm: "xl" }}>
+            <Illustration src="/illustrations/download.svg" alt="Downloading a file" maxWidth={200} />
+
             <Group gap="sm" wrap="nowrap">
               <Paper w={40} h={40} radius="md" bg="var(--mantine-color-blue-light)" c="blue"
                 style={{ display: "grid", placeItems: "center", flexShrink: 0 }}>
@@ -486,7 +521,6 @@ export function DownloadPage() {
               </div>
             </Group>
 
-            {/* The facts grid */}
             <SimpleGrid cols={2}>
               <Detail label="Size" value={formatFileSize(file.sizeBytes)} />
               <Detail label="Expires" value={file.expiresAt?.split("T")[0] ?? ""} />
@@ -494,19 +528,19 @@ export function DownloadPage() {
               <Detail label="Downloads" value={String(file.downloadCount ?? 0)} />
             </SimpleGrid>
 
-            {/* Encrypted? Ask for the password first (eye icon built into PasswordInput) */}
+            {/* Encrypted → unlock first */}
             {file.isEncrypted && !unlocked && (
               <Stack gap="sm">
                 <InfoBanner>
-                  This file is encrypted. Enter the password sent to you by the sender —
-                  VaultHub never stores it and cannot recover it.
+                  This file is locked. Enter the password the sender shared with you —
+                  we never store it and can't recover it.
                 </InfoBanner>
                 <Text fz="sm" fw={500}>
-                  <Lock size={14} style={{ verticalAlign: -2 }} /> This file is password protected
+                  <Lock size={14} style={{ verticalAlign: -2 }} /> Password required
                 </Text>
                 <PasswordInput
                   label="Password"
-                  placeholder="Enter password to decrypt"
+                  placeholder="Enter password to unlock"
                   value={password}
                   onChange={(e) => setPassword(e.currentTarget.value)}
                 />
@@ -514,13 +548,24 @@ export function DownloadPage() {
               </Stack>
             )}
 
-            {/* Unlocked (or not encrypted) → the real Download button */}
+            {/* Unlocked / plain → download with live progress */}
             {(!file.isEncrypted || unlocked) && (
               <Stack gap="xs">
                 <Button fullWidth size="md" loading={downloading} onClick={handleDownload}
                   leftSection={<DownloadIcon size={16} />}>
-                  Download
+                  {downloading && dlProgress !== null ? `Downloading… ${dlProgress}%` : "Download"}
                 </Button>
+
+                {downloading && dlProgress !== null && (
+                  <>
+                    <Progress value={dlProgress} size={6} radius="xl"
+                      color="var(--mantine-color-blue-6)" mt={4} />
+                    {dlSlow && (
+                      <Text fz="xs" c="dimmed">Large file or slow connection — hang tight, it's working.</Text>
+                    )}
+                  </>
+                )}
+
                 {file.isEncrypted && (
                   <Button variant="subtle" size="xs" color="gray"
                     onClick={() => { setUnlocked(false); setPassword(""); }}>
@@ -531,10 +576,9 @@ export function DownloadPage() {
             )}
           </Stack>
 
-          {/* Factual footer strip */}
           <Box p="md" style={{ borderTop: "1px solid var(--mantine-color-default-border)" }}>
             <Text fz="xs" c="dimmed">
-              <ShieldCheck size={14} style={{ verticalAlign: -2 }} /> End-to-end encrypted • automatically deleted after 1 day or 10 downloads
+              <ShieldCheck size={14} style={{ verticalAlign: -2 }} /> Locked on the sender's device • deleted automatically after 1 day or 10 downloads
             </Text>
           </Box>
         </Card>

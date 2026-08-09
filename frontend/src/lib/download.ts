@@ -136,3 +136,51 @@ export async function triggerDownloadFromArrayBuffer(
      URL.revokeObjectURL(blobUrl);
 
 }
+
+
+
+
+// Download a blob WITH progress (reads the stream chunk by chunk).
+export async function downloadBlobWithProgress(
+  url: string,
+  onProgress?: (p: number | null) => void
+): Promise<Blob> {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error("Failed to fetch file from storage");
+  const total = Number(response.headers.get("Content-Length")) || 0;
+  if (!response.body || !total) {
+    const blob = await response.blob();
+    if (blob.size === 0) throw new Error("Downloaded file is empty — please try again");
+    onProgress?.(100);
+    return blob;
+  }
+  const reader = response.body.getReader();
+  const chunks: BlobPart[] = [];
+  let loaded = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (value) {
+      chunks.push(value as BlobPart);
+      loaded += value.length;
+      onProgress?.(Math.min(99, Math.round((loaded / total) * 100)));
+    }
+  }
+  const blob = new Blob(chunks);
+  if (blob.size === 0) throw new Error("Downloaded file is empty — please try again");
+  onProgress?.(100);
+  return blob;
+}
+
+// Save an already-downloaded blob to disk
+export function triggerDownloadFromBlob(blob: Blob, filename: string): void {
+  const blobUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = blobUrl;
+  link.download = filename;
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(blobUrl);
+}

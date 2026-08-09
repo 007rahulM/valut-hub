@@ -54,3 +54,29 @@ html[data-mantine-color-scheme="dark"] { color-scheme: dark; }
 @media (prefers-reduced-motion: reduce) {
   .mantine-Card-root { animation: none; }
 }
+body { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+
+/* Mobile readability: comfortable line height on small screens */
+@media (max-width: 640px) {
+  p, li { line-height: 1.7; }
+  h1, h2, h3 { letter-spacing: -0.01em; }
+}
+
+@media (max-width: 767px) {
+  main {
+    padding-top: 8px !important;
+    padding-bottom: 40px !important;  /* just enough for the bottom tab bar */
+  }
+}
+/* ===== Mobile space reclaim: shrink outer gutters so cards grow ===== */
+@media (max-width: 480px) {
+  main {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
+  .mantine-Container-root {
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+}
+

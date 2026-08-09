@@ -156,3 +156,81 @@ export interface ApiResponse<T>{
 
 
    }
+
+
+   
+// ============================================================
+//  Upload with REAL progress (for the progress bar)
+//
+// Uses XMLHttpRequest because fetch doesn't support upload progress.
+// - onProgress: callback with 0-100 percentage
+// - onStall: called when upload hasn't moved for ~8 seconds (slow network)
+// ============================================================
+export function uploadFileToS3WithProgress(
+  presignedUrl: string,
+  file: File | Blob,
+  opts: { signal?: AbortSignal; onProgress?: (p: number) => void; onStall?: () => void } = {}
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    let lastMove = Date.now();
+
+    // Check every 3 seconds if the upload is stuck
+    const stallTimer = window.setInterval(() => {
+      if (Date.now() - lastMove > 8000) {
+        opts.onStall?.(); // Tell the UI "this is slow, but still working"
+      }
+    }, 3000);
+
+    // Cleanup helper
+    const clear = () => window.clearInterval(stallTimer);
+
+    xhr.open("PUT", presignedUrl);
+    xhr.setRequestHeader("Content-Type", (file as File).type || "application/octet-stream");
+
+    // Track upload progress (this is why we use XHR instead of fetch)
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        lastMove = Date.now(); // Reset the "stuck" timer
+        const percent = Math.round((e.loaded / e.total) * 100);
+        opts.onProgress?.(percent);
+      }
+    };
+
+    // Upload finished successfully
+    xhr.onload = () => {
+      clear();
+      // FIXED: Use if/else instead of ternary (ESLint rule)
+      if (xhr.status < 300) {
+        resolve();
+      } else {
+        reject(new Error("Upload failed (server said " + xhr.status + ")"));
+      }
+    };
+
+    // Network error
+    xhr.onerror = () => {
+      clear();
+      reject(new Error("Network error during upload"));
+    };
+
+    // User cancelled
+    xhr.onabort = () => {
+      clear();
+      reject(new Error("Upload cancelled"));
+    };
+
+    // Handle AbortSignal (for offline detection)
+    if (opts.signal) {
+      if (opts.signal.aborted) {
+        clear();
+        reject(new Error("Upload cancelled"));
+        return;
+      }
+      opts.signal.addEventListener("abort", () => xhr.abort());
+    }
+
+    // Send the file bytes to S3
+    xhr.send(file);
+  });
+}

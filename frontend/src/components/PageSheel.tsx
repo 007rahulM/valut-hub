@@ -9,11 +9,11 @@ interface PageShellProps {
 
 export function PageShell({ title, subtitle, children }: PageShellProps) {
   return (
-    <Container size="md" py="xl">
-      <Card withBorder shadow="sm" radius="lg" p="xl">
+    <Container size="md" py={{ base: "md", sm: "xl" }}>
+      <Card withBorder shadow="sm" radius="lg" p={{ base: "md", sm: "xl" }}>
         <Title order={2}>{title}</Title>
         {subtitle && <Text c="dimmed" fz="sm" mt={4}>{subtitle}</Text>}
-        <Box mt="lg">{children}</Box>
+        <Box mt="md">{children}</Box>
       </Card>
     </Container>
   );
