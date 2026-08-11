@@ -80,3 +80,11 @@ body { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto
   }
 }
 
+/* Legal pages: cap line length on wide screens for readability */
+@media (min-width: 992px) {
+  .space-y-8 {
+    max-width: 880px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}

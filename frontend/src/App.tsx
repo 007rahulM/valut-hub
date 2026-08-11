@@ -41,22 +41,28 @@
 // export default App;
 
 
-// App.tsx
+
+
+// App.tsx - router + layout shell
+// Pages are lazy-loaded: the first visit downloads only the page
+// the user opened, not all ten pages. Big win for FCP and LCP.
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import  Header  from "./components/Header";
-import  Footer  from "./components/Footer";
-import UploadPage from "./pages/UploadPage";
-import  {DownloadPage}  from "./pages/DownloadPage";
-import { AboutPage } from "./pages/AboutPage";
-import { TermsPage } from "./pages/TermsPage";
-import { PrivacyPage } from "./pages/PrivacyPage";
-import { FAQPage } from "./pages/FAQPage";
-import { HowItWorksPage } from "./pages/HowItWorksPage";
-import { NotFoundPage } from "./pages/NotFoundPage";
-import { Toaster } from "react-hot-toast";   
-import{ CookiePolicy} from "./pages/CookiePolicy";
-import { FeedbackPage } from "./pages/FeedbackPage";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
 import MobileNav from "./components/MobileNav";
+import { Toaster } from "react-hot-toast";
+
+const UploadPage = lazy(() => import("./pages/UploadPage"));
+const DownloadPage = lazy(() => import("./pages/DownloadPage"));
+const AboutPage = lazy(() => import("./pages/AboutPage"));
+const TermsPage = lazy(() => import("./pages/TermsPage"));
+const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
+const FAQPage = lazy(() => import("./pages/FAQPage"));
+const HowItWorksPage = lazy(() => import("./pages/HowItWorksPage"));
+const CookiePolicy = lazy(() => import("./pages/CookiePolicy"));
+const FeedbackPage = lazy(() => import("./pages/FeedbackPage"));
+const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -67,8 +73,7 @@ function Layout({ children }: { children: React.ReactNode }) {
       </main>
       <Footer />
       <MobileNav />
-    
-<Toaster position="top-center" toastOptions={{ duration: 3000 }} />
+      <Toaster position="top-center" toastOptions={{ duration: 3000 }} />
     </div>
   );
 }
@@ -76,18 +81,20 @@ function Layout({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout><UploadPage /></Layout>} />
-        <Route path="/file/:token" element={<Layout><DownloadPage /></Layout>} />
-        <Route path="/about" element={<Layout><AboutPage /></Layout>} />
-        <Route path="/terms" element={<Layout><TermsPage /></Layout>} />
-        <Route path="/privacy" element={<Layout><PrivacyPage /></Layout>} />
-        <Route path="/faq" element={<Layout><FAQPage /></Layout>} />
-        <Route path="/how" element={<Layout><HowItWorksPage /></Layout>} />
-        <Route path="/cookies" element={<Layout><CookiePolicy /></Layout>} />
-        <Route path="/feedback" element={<Layout><FeedbackPage /></Layout>} />
-        <Route path="*" element={<Layout><NotFoundPage /></Layout>} />
-      </Routes>
+      <Suspense fallback={null}>
+        <Routes>
+          <Route path="/" element={<Layout><UploadPage /></Layout>} />
+          <Route path="/file/:token" element={<Layout><DownloadPage /></Layout>} />
+          <Route path="/about" element={<Layout><AboutPage /></Layout>} />
+          <Route path="/terms" element={<Layout><TermsPage /></Layout>} />
+          <Route path="/privacy" element={<Layout><PrivacyPage /></Layout>} />
+          <Route path="/faq" element={<Layout><FAQPage /></Layout>} />
+          <Route path="/how" element={<Layout><HowItWorksPage /></Layout>} />
+          <Route path="/cookies" element={<Layout><CookiePolicy /></Layout>} />
+          <Route path="/feedback" element={<Layout><FeedbackPage /></Layout>} />
+          <Route path="*" element={<Layout><NotFoundPage /></Layout>} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

@@ -1,0 +1,8 @@
+# VaultHub
+Private, temporary file sharing. Files are encrypted in the sender's browser,
+shared with a link, and deleted after 1 day or 10 downloads.
+
+- Upload: /
+- How it works: /how
+- FAQ: /faq
+- Privacy: /privacy

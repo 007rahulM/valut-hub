@@ -1,3 +1,15 @@
+
+
+// ============================================================
+// FeedbackPage — THE STAR RATING + MESSAGE PAGE
+// Submits to FormSubmit (forwards to the team inbox as a
+// clean table). If FormSubmit fails, falls back to opening
+// the user's mail app with a pre-filled email.
+// Used standalone at /feedback AND inline on upload-complete
+// and download-complete pages via FeedbackPrompt component.
+// ============================================================
+
+
 import { useState } from "react";
 import { Button, Card, Rating, Stack, Text, Textarea } from "@mantine/core";
 import toast from "react-hot-toast";
@@ -10,7 +22,7 @@ export function FeedbackPage() {
   const [sending, setSending] = useState(false);
 
   const submit = async () => {
-    if (!stars) return toast.error("Please tap a star rating first.");
+    if (!stars) return toast.error("Please tap a star rating first");
     setSending(true);
     try {
       const res = await fetch("https://formsubmit.co/ajax/rk096327945@gmail.com", {
@@ -27,7 +39,7 @@ export function FeedbackPage() {
         }),
       });
       if (!res.ok) throw new Error("send failed");
-      toast.success("Thanks — that helps more than you think.");
+      toast.success("Thanks😊 that helps more than you think.");
       setStars(0);
       setMessage("");
     } catch {

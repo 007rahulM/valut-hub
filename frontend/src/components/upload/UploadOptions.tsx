@@ -43,7 +43,7 @@ export function UploadOptions(props: UploadOptionsProps) {
   // Copy the current password to clipboard
   const copyPassword = () => {
     navigator.clipboard.writeText(props.password);
-    toast.success("Password copied!", { duration: 2000 });
+    toast.success("Password copied", { duration: 2000 });
   };
 
   return (

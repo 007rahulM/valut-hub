@@ -126,24 +126,31 @@ function UploadPage() {
       });
 
       setShareUrl(newShareUrl); setCreatedAt(Date.now()); setStep("link");
-      toast.success("Upload complete!");
+      toast.success("Upload complete");
     } catch (err) {
       const base = !navigator.onLine
         ? "Your internet dropped during the upload."
         : err instanceof Error ? err.message : "Upload failed.";
-      setFailed(`${base} Don't worry — your file never left your device. Press Upload to try again.`);
+      setFailed(`${base} Don't worry your file never left your device. Press Upload to try again.`);
     } finally {
       window.removeEventListener("offline", goOffline);
       setIsWorking(false);
     }
   };
 
-  const handleCopy = () => {
-    if (!shareUrl) return;
-    navigator.clipboard.writeText(shareUrl);
-    setCopied(true);
-    toast.success("Link copied!", { duration: 2000 });
-  };
+  // const handleCopy = () => {
+  //   if (!shareUrl) return;
+  //   navigator.clipboard.writeText(shareUrl);
+  //   setCopied(true);
+  //   toast.success("Link copied!", { duration: 2000 });
+  // };
+
+  // Copy whatever link the card hands us (plain or #embedded)
+const handleCopy = (url: string) => {
+  navigator.clipboard.writeText(url);
+  setCopied(true);
+  toast.success("Link copied", { duration: 2000 });
+};
 
   const reset = () => {
     setStep("drop"); setFile(null); setPassword("");
@@ -161,7 +168,7 @@ function UploadPage() {
               <Title order={2}>Simple, private file sharing</Title>
               <Text c="dimmed" fz="sm" lh={1.8}>
                 VaultHub lets you share files with{" "}
-                <Term tip="Your file is locked on YOUR device before upload. Only someone with the link (and the password, if you set one) can ever open it — even we cannot.">
+                <Term tip="Your file is locked on YOUR device before upload. Only someone with the link (and the password, if you set one) can ever open it even we cannot.">
                   end-to-end encryption
                 </Term>{" "}
                 and a{" "}
@@ -187,7 +194,7 @@ function UploadPage() {
           </SimpleGrid>
           <Group mt="lg">
             <InfoBanner>
-              Files are locked in your browser before upload — only people with the link
+              Files are locked in your browser before upload only people with the link
               (and the password, if you set one) can ever read them.
             </InfoBanner>
           </Group>
@@ -235,7 +242,7 @@ function UploadPage() {
               />
               {slowNote && (
                 <Text fz="xs" c="dimmed" mt={6}>
-                  Connection looks slow — hang tight, we're still working.
+                  Connection looks slow hang tight, we're still working.
                 </Text>
               )}
             </Paper>
@@ -257,7 +264,8 @@ function UploadPage() {
             copied={copied}
             isEncrypted={isEncrypted}
             password={password}
-            onCopyPassword={() => { navigator.clipboard.writeText(password); toast.success("Password copied!"); }}
+            fileName={file?.name}
+            onCopyPassword={() => { navigator.clipboard.writeText(password); toast.success("Password copied"); }}
             maxDownloads={maxDownloads}
             timeLeft={timeLeft}
             onCopy={handleCopy}

@@ -25,7 +25,13 @@ export function Illustration({ src, alt, maxWidth = 320 }: IllustrationProps) {
         padding: dark ? 8 : 0,
       }}
     >
-      <img src={src} alt={alt} style={{ display: "block", width: "100%", height: "auto" }} />
+<img
+  src={src}
+  alt={alt}
+  width={maxWidth}
+  height={Math.round(maxWidth * 0.75)}
+  style={{ display: "block", width: "100%", height: "auto" }}
+/>
     </Box>
   );
 }

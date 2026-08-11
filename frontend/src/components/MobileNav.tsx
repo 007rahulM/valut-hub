@@ -28,9 +28,14 @@ export function MobileNav() {
           const Icon = t.icon;
           return (
             <Link key={t.to} to={t.to}
-              style={{ flex: 1, textDecoration: "none", padding: "10px 0 8px", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-              <Icon size={20} style={{ color: active ? "var(--mantine-color-brand-6)" : "var(--mantine-color-dimmed)" }} />
-              <Text fz={10} fw={active ? 700 : 500} c={active ? "brand" : "dimmed"}>{t.label}</Text>
+              style={{
+                flex: 1, textDecoration: "none",
+                padding: "12px 0 10px",
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
+                minHeight: 52,
+              }}>
+              <Icon size={22} style={{ color: active ? "var(--mantine-color-brand-7)" : "var(--mantine-color-dimmed)" }} />
+              <Text fz={11} fw={active ? 700 : 500} c={active ? "brand-7" : "dimmed"}>{t.label}</Text>
             </Link>
           );
         })}

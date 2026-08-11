@@ -27,7 +27,7 @@ export function FeedbackPrompt() {
     } catch {
       /* a rating should never block or annoy anyone */
     }
-    toast.success("Thanks — that helps more than you think.");
+    toast.success("Thanks😊 that helps more than you think.");
   };
 
   return (

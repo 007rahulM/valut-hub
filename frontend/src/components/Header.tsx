@@ -38,7 +38,7 @@ export function Header() {
               <Text
                 component={Link} to={l.to} fz="sm"
                 fw={location.pathname === l.to ? 700 : 500}
-                c={location.pathname === l.to ? "var(--mantine-color-brand-6)" : "dimmed"}
+                c={location.pathname === l.to ? "var(--mantine-color-brand-7)" : "dimmed"}
                 style={{ textDecoration: "none" }}
               >
                 {l.label}

@@ -1,3 +1,11 @@
+
+// ============================================================
+// AboutPage — WHO WE ARE AND WHY WE BUILT THIS
+// Four short sections: Mission, How we're different,
+// Who it's for, and a light-hearted closing note.
+// Tooltips (Term component) on: zero-knowledge, AES-GCM.
+// ============================================================
+
 import { PageShell } from "../components/PageSheel";
 import { Text } from "@mantine/core";
 import { Term } from "../components/Term";
@@ -9,7 +17,7 @@ export function AboutPage() {
         style={{ maxWidth: 280, width: "100%", height: "auto", margin: "0 auto 28px", display: "block" }} />
 
       <Text fz="sm" c="dimmed" mb="md" lh={1.7}>
-        <Text component="span" fw={700} c="var(--mantine-color-text)">Our Mission:</Text> Your files should belong to you, and only you. Most cloud services were built to keep files forever — and to read them: their terms allow automated scanning, processing and machine-learning on your content. VaultHub was built to reverse that. We provide file sharing that is as easy as a standard link, but as private as a locked vault.
+        <Text component="span" fw={700} c="var(--mantine-color-text)">Our Mission:</Text> your files should belong to you, not us. Most cloud storage services keep files indefinitely, and their terms often allow scanning and machine-learning on whatever you upload. VaultHub does the opposite. Sharing a file is as easy as sending a link, and as private as handing someone a locked box
       </Text>
 
       <Text fz="sm" c="dimmed" mb="md" lh={1.7}>
@@ -25,7 +33,7 @@ export function AboutPage() {
       </Text>
 
       <Text fz="sm" c="dimmed" lh={1.7}>
-        <Text component="span" fw={700} c="var(--mantine-color-text)">One light-hearted note:</Text> VaultHub exists to keep private things private — so please don't use it to leak exam papers, spoilers, or anyone else's secrets without permission. Privacy is a right we protect, not a loophole we provide. 🙂
+        <Text component="span" fw={700} c="var(--mantine-color-text)">One light-hearted note:</Text> VaultHub exists to keep private things private  so please don't use it to leak exam papers, spoilers, or anyone else's secrets without permission. Privacy is a right we protect, not a loophole we provide. 🙂
       </Text>
     </PageShell>
   );
