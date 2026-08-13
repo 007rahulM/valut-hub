@@ -5,7 +5,6 @@ dotenv.config();
 import express from "express";
 import cors from "cors";
 import prisma from "./lib/prisma";
-import { error, timeStamp } from "node:console";
 import crypto from "crypto";  //for generating unique identifiers and hashing passwords
 import {createHash} from "crypto";   //has the provided password using node.js crypto not the borowser crypto because this is backend code and we are using node.js runtime
 import { generateUploadUrl, generateDownloadUrl } from "./services/s3Service";
@@ -13,7 +12,34 @@ import { generateUploadUrl, generateDownloadUrl } from "./services/s3Service";
 
 const app=express();
 
-app.use(cors());     //allows us to make requests frontend to talk to backend
+//the vip cuest list cors giguration
+const allowOrigins=[
+    "http://localhost:5173",    //our local vite frontend
+    "http://localhost:4173",   //our local vite build running here 
+    "http://localhost:3000",  // just in case we use port 3000
+    "https://valut-hub.vercel.app",  //our live vercel frontend
+    //if we buy the custome doaim later we will dd it here...
+
+]
+
+app.use(cors({
+    origin: function(origin,callback){
+        //1. allow tools like postman ,curl, or mobile pps(they dont have and origin)
+        if(!origin) return callback(null,true);
+
+        //2 check if the requesting wesbite is on our vip list or corsorigin list
+        if(allowOrigins.indexOf(origin)=== -1){
+            const msg = "CORS Policy: This site is not allowed to access the API";
+            return callback(new Error(msg),false);
+        }
+
+        //3 they are on the list let them in 
+        return callback(null,true);
+
+    },
+    credentials:true, // allows cookies/sessions if we ever need them 
+}));     //allows us to make requests frontend to talk to backend
+
 app.use(express.json());   //parse JSON request bodies
 
 
@@ -94,10 +120,6 @@ app.post("/api/upload", async (req, res) => {
   }
 });
 
-
-//middlewares: dunctions that run before the actual request handler 
-app.use(cors());     //allows us to make requests frontend to talk to backend
-app.use(express.json());   //parse JSON request bodies
 
 //health check endpoint
 app.get("/health",(req,res)=>{
@@ -293,7 +315,7 @@ app.post("/api/download/:token",async(req,res)=>{
 
 //start server 
 
-const PORT=process.env.PORT || 3001;
-app.listen(PORT,()=>{
-    console.log(`Server running on http://localhost:${PORT}`);
+const PORT=Number(process.env.PORT) || 3001;
+app.listen(PORT,"0.0.0.0",()=>{
+    console.log(`Server running on http://0.0.0.0:${PORT}`);
 });
