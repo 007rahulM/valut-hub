@@ -1,14 +1,96 @@
-import { Group, Text } from "@mantine/core";
+// import { useEffect, useState } from "react";
+// import type { CSSProperties } from "react";
+// import { Box } from "@mantine/core";
+
+// // Full logo file (square with padding). Change if your path differs.
+// const LOGO_URL = "/illustrations/logoo.png";
+
+// // The lockup (fingerprint + wordmark) area inside the square image.
+// const CONTENT = { x: 0.12, y: 0.3, w: 0.76, h: 0.35 };
+
+// // Pick logo height: smaller on phones, bigger on laptop
+// function getTargetH() {
+//   if (typeof window === "undefined") return 50;
+//   return window.matchMedia("(max-width: 480px)").matches ? 38 : 50;
+// }
+
+// // Fallback look while the image loads
+// const fallback = (h: number): CSSProperties => ({
+//   width: Math.round(h * 2.2),
+//   height: h,
+//   display: "inline-block",
+//   backgroundImage: `url(${LOGO_URL})`,
+//   backgroundRepeat: "no-repeat",
+//   backgroundSize: "cover",
+//   backgroundPosition: "center",
+// });
+
+// export function Logo() {
+//   const [targetH, setTargetH] = useState<number>(getTargetH);
+//   const [style, setStyle] = useState<CSSProperties>(() => fallback(getTargetH()));
+
+//   // Follow viewport changes (resize, phone rotation)
+//   useEffect(() => {
+//     const mq = window.matchMedia("(max-width: 480px)");
+//     const onChange = () => setTargetH(mq.matches ? 38 : 50);
+//     if (mq.addEventListener) mq.addEventListener("change", onChange);
+//     return () => {
+//       if (mq.removeEventListener) mq.removeEventListener("change", onChange);
+//     };
+//   }, []);
+
+//   // Measure the real file, then crop exactly the lockup area
+//   useEffect(() => {
+//     const img = new Image();
+//     img.onload = () => {
+//       const H = targetH / CONTENT.h;
+//       const W = H * ((img.naturalWidth || 1) / (img.naturalHeight || 1));
+//       setStyle({
+//         width: Math.round(W * CONTENT.w),
+//         height: targetH,
+//         display: "inline-block",
+//         backgroundImage: `url(${LOGO_URL})`,
+//         backgroundRepeat: "no-repeat",
+//         backgroundSize: `${Math.round(W)}px ${Math.round(H)}px`,
+//         backgroundPosition: `${-Math.round(W * CONTENT.x)}px ${-Math.round(H * CONTENT.y)}px`,
+//         flexShrink: 0,
+//       });
+//     };
+//     img.src = LOGO_URL;
+//   }, [targetH]);
+
+//   return <Box component="span" role="img" aria-label="SendDrift" style={style} />;
+// }
+
+
+import { Box, useMantineColorScheme } from "@mantine/core";
+
+// These are the exact filenames already present in public/illustrations.
+const LIGHT_LOGO_URL = "/illustrations/main_logo_lighmode_removed_backround2.png";
+const DARK_LOGO_URL = "/illustrations/main_logo_darkmode_removed_background3.png";
 
 export function Logo() {
+  const { colorScheme } = useMantineColorScheme();
+  const src = colorScheme === "dark" ? DARK_LOGO_URL : LIGHT_LOGO_URL;
+
   return (
-    <Group gap={8} wrap="nowrap">
-      <img src="/illustrations/icon.svg" alt="" width={28} height={26} style={{ display: "block" }} />
-      <Text fw={800} fz="lg" lh={1}>
-        <span style={{ color: "var(--mantine-color-text)" }}>Vault</span>
-        {/* Darker orange so small text passes the contrast rule */}
-        <span style={{ color: "#CE4214" }}>Hub</span>
-      </Text>
-    </Group>
+    <Box
+      component="img"
+      src={src}
+      alt="Sendly"
+      aria-label="Sendly"
+      loading="eager"
+      decoding="async"
+      style={{
+        display: "block",
+        height: "clamp(34px, 5vw, 48px)",
+        width: "auto",
+        maxWidth: "min(240px, 42vw)",
+        objectFit: "contain",
+        objectPosition: "left center",
+      }}
+    />
   );
 }
+
+export default Logo;

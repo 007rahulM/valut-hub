@@ -1,0 +1,173 @@
+
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sendly Multipart V2 Test</title>
+  <style>
+    :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+    body { max-width: 760px; margin: 40px auto; padding: 0 20px; line-height: 1.5; }
+    .card { border: 1px solid #8885; border-radius: 12px; padding: 20px; margin-top: 18px; }
+    button { border: 0; border-radius: 8px; padding: 12px 18px; cursor: pointer; font-weight: 700; }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    progress { width: 100%; height: 22px; margin-top: 12px; }
+    #stage { font-weight: 700; margin-top: 12px; }
+    #message { white-space: pre-wrap; word-break: break-word; }
+    .ok { color: #159447; }
+    .bad { color: #c33131; }
+    .muted { opacity: .72; }
+    code { background: #8882; padding: 2px 5px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Sendly Multipart V2 Test</h1>
+  <p>This is a development-only test screen. It does not use the real UploadPage and does not change the old upload code.</p>
+
+  <div class="card">
+    <p><strong>What will happen:</strong> the page opens a multipart session, asks for permission for one 16 MiB part, sends that part directly to S3, checks the ETag, and aborts the temporary session.</p>
+    <button id="runButton" type="button">Run 16 MiB Part Test</button>
+    <p id="stage" class="muted">Waiting to start.</p>
+    <progress id="progress" value="0" max="100"></progress>
+    <p id="message" class="muted"></p>
+  </div>
+
+  <div class="card">
+    <h2>What each result means</h2>
+    <p><code>Session created</code> means the backend and S3 can open the upload.</p>
+    <p><code>Part URL created</code> means the backend signed permission for one piece.</p>
+    <p><code>Sending to S3</code> means the browser has left the backend and is sending bytes directly to AWS.</p>
+    <p><code>ETag received</code> means the S3 upload and the browser CORS response both worked.</p>
+    <p><code>Timeout</code> means the direct S3 request did not finish within two minutes and needs investigation.</p>
+  </div>
+
+  <script>
+    (() => {
+      const API_BASE = "http://localhost:3001";
+      const PART_SIZE = 16 * 1024 * 1024;
+      const runButton = document.querySelector("#runButton");
+      const stage = document.querySelector("#stage");
+      const progress = document.querySelector("#progress");
+      const message = document.querySelector("#message");
+
+      const show = (text, className = "muted") => {
+        stage.textContent = text;
+        stage.className = className;
+      };
+
+      const write = (text) => {
+        message.textContent = text;
+      };
+
+      const jsonRequest = async (path, body, signal) => {
+        const response = await fetch(`${API_BASE}${path}`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+          signal,
+        });
+        const data = await response.json();
+        if (!response.ok || data.success !== true) {
+          throw new Error(`${path} returned HTTP ${response.status}: ${data?.error?.message || "request failed"}`);
+        }
+        return data;
+      };
+
+      const uploadOnePart = (url, blob, signal) => new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        let settled = false;
+        const finish = (fn, value) => {
+          if (settled) return;
+          settled = true;
+          signal.removeEventListener("abort", abortRequest);
+          fn(value);
+        };
+        const abortRequest = () => xhr.abort();
+
+        xhr.open("PUT", url, true);
+        xhr.timeout = 120000;
+
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percent = Math.round((event.loaded / event.total) * 100);
+            progress.value = percent;
+            show(`Sending part to S3 — ${percent}%`);
+          }
+        };
+
+        xhr.onload = () => {
+          const etag = xhr.getResponseHeader("ETag");
+          if (xhr.status >= 200 && xhr.status < 300 && etag) {
+            finish(resolve, { status: xhr.status, etagPresent: true });
+            return;
+          }
+          finish(reject, new Error(`S3 returned HTTP ${xhr.status}; ETag present: ${Boolean(etag)}`));
+        };
+
+        xhr.onerror = () => finish(reject, new Error(`S3 network error; status ${xhr.status}; readyState ${xhr.readyState}`));
+        xhr.ontimeout = () => finish(reject, new Error("S3 request timed out after 120 seconds"));
+        xhr.onabort = () => finish(reject, new Error("S3 request was aborted"));
+        signal.addEventListener("abort", abortRequest, { once: true });
+        xhr.send(blob);
+      });
+
+      const runTest = async () => {
+        runButton.disabled = true;
+        progress.value = 0;
+        write("");
+        const controller = new AbortController();
+        let session = null;
+
+        try {
+          show("1/5 — Opening multipart session");
+          const start = await jsonRequest("/api/v2/upload/multipart/start", {
+            originalName: "v2-visible-16mb-test.txt",
+            mimeType: "text/plain",
+            sizeBytes: PART_SIZE,
+            isEncrypted: false,
+          }, controller.signal);
+          session = start.data;
+
+          show("2/5 — Session created", "ok");
+          write("The backend and S3 session are ready.");
+
+          show("3/5 — Asking for part 1 URL");
+          const part = await jsonRequest("/api/v2/upload/multipart/part", {
+            token: session.token,
+            uploadId: session.uploadId,
+            partNumber: 1,
+          }, controller.signal);
+
+          show("4/5 — Part URL created", "ok");
+          write("The browser now sends the bytes directly to S3.");
+
+          const blob = new Blob([new Uint8Array(PART_SIZE)]);
+          const result = await uploadOnePart(part.data.url, blob, controller.signal);
+          show("5/5 — ETag received", "ok");
+          progress.value = 100;
+          write(`S3 returned HTTP ${result.status}. CORS exposed the ETag successfully.`);
+        } catch (error) {
+          show("Test failed", "bad");
+          write(error instanceof Error ? error.message : String(error));
+        } finally {
+          if (session) {
+            show("Cleaning temporary session");
+            try {
+              await jsonRequest("/api/v2/upload/multipart/abort", {
+                token: session.token,
+                uploadId: session.uploadId,
+              });
+              write(`${message.textContent}\nTemporary session cleaned.`);
+            } catch (cleanupError) {
+              write(`${message.textContent}\nCleanup failed; the backend may need the session cleaned manually.`);
+            }
+          }
+          runButton.disabled = false;
+        }
+      };
+
+      runButton.addEventListener("click", runTest);
+    })();
+  </script>
+</body>
+</html>

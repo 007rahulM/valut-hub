@@ -23,7 +23,7 @@ export function NotFoundPage() {
           <Text c="dimmed" fz="sm" ta="center" maw={380}>
             The page you're looking for doesn't exist or has moved. File links also expire this one may have too.
           </Text>
-          <Button component={Link} to="/">Go home</Button>
+          <Button component={Link} to="/">Go Upload Page</Button>
         </Stack>
       </Card>
     </Container>

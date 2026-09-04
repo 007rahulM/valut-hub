@@ -1,4 +1,4 @@
-# version: '3.8'
+version: '3'
 
 services:
   postgres:
@@ -13,6 +13,9 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    # ---- THIS FORCE-LIMITS THE MEMORY DIRECTLY ----
+    mem_limit: 512m
+    mem_reservation: 128m
 
 volumes:
   postgres_data:

@@ -18,8 +18,20 @@ html[data-mantine-color-scheme="dark"] { color-scheme: dark; }
   --mantine-color-default-border: #26334a;
   --mantine-color-text: #e8eef6;
   --mantine-color-dimmed: #93a4b8;
+  /* Keep the orange accent, but soften its light surfaces on navy backgrounds. */
+  --mantine-color-brand-light: rgba(232, 80, 30, 0.15);
+  --mantine-color-brand-light-hover: rgba(232, 80, 30, 0.23);
 }
+/* :root[data-mantine-color-scheme="dark"] body { background: #0b1220; } */
+
 :root[data-mantine-color-scheme="dark"] body { background: #0b1220; }
+
+/* DARK MODE ONLY: cards that contain an illustration get a lighter navy
+   surface so the artwork's dark shapes don't blend into the card.
+   Experiment dial: #182338 = subtle, #1e2a3d = balanced, #243248 = strong. */
+:root[data-mantine-color-scheme="dark"] .mantine-Card-root:has(img[src*="/illustrations/"]) {
+  background: #1e2a3d;
+}
 
 /* plain underlined links (Share another file, etc.) */
 .link-plain {
@@ -65,7 +77,21 @@ body { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto
 @media (max-width: 767px) {
   main {
     padding-top: 8px !important;
-    padding-bottom: 40px !important;  /* just enough for the bottom tab bar */
+    padding-bottom: 92px !important;  /* clears the fixed mobile tab bar */
+  }
+
+  .sendly-install-prompt {
+    left: 10px !important;
+    right: 10px !important;
+    bottom: calc(58px + env(safe-area-inset-bottom)) !important;
+    width: auto !important;
+    max-width: none !important;
+    max-height: 64px;
+    overflow: hidden;
+  }
+
+  .sendly-footer {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom)) !important;
   }
 }
 /* ===== Mobile space reclaim: shrink outer gutters so cards grow ===== */

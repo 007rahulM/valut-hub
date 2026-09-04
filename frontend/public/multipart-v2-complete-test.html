@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sendly Multipart V2 Completion Test</title>
+  <style>
+    body { max-width: 760px; margin: 40px auto; padding: 0 20px; font: 16px system-ui, sans-serif; line-height: 1.5; }
+    button { padding: 12px 18px; border: 0; border-radius: 8px; font-weight: 700; cursor: pointer; }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    progress { width: 100%; height: 22px; }
+    #stage { font-weight: 700; margin-top: 18px; }
+    #details { white-space: pre-wrap; }
+    .ok { color: #168545; } .bad { color: #bd2424; }
+  </style>
+</head>
+<body>
+  <h1>Sendly Multipart V2 Completion Test</h1>
+  <p>This separate development page tests one complete 16 MiB multipart upload. It does not use the real UploadPage and does not change old code.</p>
+  <button id="run" type="button">Run Complete 16 MiB Test</button>
+  <p id="stage">Waiting to start.</p>
+  <progress id="progress" value="0" max="100"></progress>
+  <p id="details"></p>
+
+  <script>
+    (() => {
+      const API = "http://localhost:3001";
+      const PART_SIZE = 16 * 1024 * 1024;
+      const runButton = document.querySelector("#run");
+      const stage = document.querySelector("#stage");
+      const progress = document.querySelector("#progress");
+      const details = document.querySelector("#details");
+
+      const show = (text, className = "") => {
+        stage.textContent = text;
+        stage.className = className;
+      };
+
+      const postJson = async (path, body) => {
+        const response = await fetch(`${API}${path}`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const data = await response.json();
+        if (!response.ok || data.success !== true) {
+          throw new Error(`${path}: HTTP ${response.status} — ${data?.error?.message || "request failed"}`);
+        }
+        return data;
+      };
+
+      const putPart = (url, blob) => new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", url, true);
+        // Diagnostic test only: allow a slow direct S3 upload up to 10 minutes.
+        // The production upload engine will later use an inactivity timeout instead.
+        xhr.timeout = 600000;
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percent = Math.round((event.loaded / event.total) * 100);
+            progress.value = percent;
+            show(`3/5 — Sending part to S3: ${percent}%`);
+          }
+        };
+        xhr.onload = () => {
+          const etag = xhr.getResponseHeader("ETag");
+          if (xhr.status >= 200 && xhr.status < 300 && etag) {
+            resolve(etag);
+          } else {
+            reject(new Error(`S3 returned HTTP ${xhr.status}; ETag present: ${Boolean(etag)}`));
+          }
+        };
+        xhr.onerror = () => reject(new Error(`S3 network error; status ${xhr.status}`));
+        xhr.ontimeout = () => reject(new Error("S3 timed out after 10 minutes"));
+        xhr.onabort = () => reject(new Error("S3 request was aborted"));
+        xhr.send(blob);
+      });
+
+      runButton.addEventListener("click", async () => {
+        runButton.disabled = true;
+        progress.value = 0;
+        details.textContent = "";
+        let session;
+        try {
+          show("1/5 — Opening multipart session");
+          const start = await postJson("/api/v2/upload/multipart/start", {
+            originalName: "v2-complete-16mb-test.txt",
+            mimeType: "text/plain",
+            sizeBytes: PART_SIZE,
+            isEncrypted: false,
+            expirySeconds: 60,
+            maxDownloads: 1,
+          });
+          session = start.data;
+          show("2/5 — Session created", "ok");
+
+          const part = await postJson("/api/v2/upload/multipart/part", {
+            token: session.token,
+            uploadId: session.uploadId,
+            partNumber: 1,
+          });
+          show("3/5 — Part URL created", "ok");
+
+          const etag = await putPart(part.data.url, new Blob([new Uint8Array(PART_SIZE)]));
+          show("4/5 — ETag received", "ok");
+
+          const complete = await postJson("/api/v2/upload/multipart/complete", {
+            token: session.token,
+            uploadId: session.uploadId,
+            parts: [{ PartNumber: 1, ETag: etag }],
+          });
+          progress.value = 100;
+          show("5/5 — Multipart completed", "ok");
+          details.textContent = `${complete.message}\nThe database record should now be READY.\nThe test file expires in about 60 seconds.`;
+        } catch (error) {
+          show("Test failed", "bad");
+          details.textContent = error instanceof Error ? error.message : String(error);
+          if (session) {
+            try {
+              await postJson("/api/v2/upload/multipart/abort", {
+                token: session.token,
+                uploadId: session.uploadId,
+              });
+              details.textContent += "\nTemporary session aborted.";
+            } catch {
+              details.textContent += "\nAutomatic cleanup failed.";
+            }
+          }
+        } finally {
+          runButton.disabled = false;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -22,10 +22,17 @@
 //   Delete those env vars and redeploy. That's it.
 // ============================================================
 
-export const FEATURES = {
-  // Branded QR share card (preview + copy + download + share sheet)
-  shareQr: import.meta.env.DEV || import.meta.env.VITE_FEATURE_SHARE_QR === "true",
+// export const FEATURES = {
+//   // Branded QR share card (preview + copy + download + share sheet)
+//   shareQr: import.meta.env.DEV || import.meta.env.VITE_FEATURE_SHARE_QR === "true",
 
-  // Embed password in link using #fragment (opt-in switch)
-  embedPassword: import.meta.env.DEV || import.meta.env.VITE_FEATURE_EMBED_PASSWORD === "true",
+//   // Embed password in link using #fragment (opt-in switch)
+//   embedPassword: import.meta.env.DEV || import.meta.env.VITE_FEATURE_EMBED_PASSWORD === "true",
+// };
+
+export const FEATURES = {
+  // Force true for local/preview testing. 
+  // Later, you can change this to: import.meta.env.VITE_FEATURE_SHARE_QR === "true"
+  shareQr: true,
+  embedPassword: true,
 };

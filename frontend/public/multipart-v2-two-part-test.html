@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sendly Multipart V2 Two-Part Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 760px; margin: 40px auto; padding: 0 20px; color: #17202a; }
+    h1 { margin-bottom: 8px; }
+    .note { background: #f2f6fa; border-left: 4px solid #3578a8; padding: 12px 14px; line-height: 1.5; }
+    button { padding: 10px 16px; font-size: 16px; cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .6; }
+    #status { margin-top: 18px; padding: 14px; background: #111827; color: #f9fafb; white-space: pre-wrap; line-height: 1.55; min-height: 170px; }
+    progress { width: 100%; height: 22px; margin-top: 14px; }
+    .small { color: #52606d; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <h1>Sendly Multipart V2 Two-Part Test</h1>
+  <p class="note">
+    This is a separate development-only page. It does not use the real UploadPage and does not change the old upload code.
+    It creates one 32 MiB test file, splits it into two 16 MiB parts, uploads both parts to S3, and asks S3 to complete the file.
+  </p>
+
+  <button id="run">Run Two-Part Test</button>
+  <progress id="progress" value="0" max="100"></progress>
+  <div id="status">Waiting to start.</div>
+  <p class="small">Keep the backend terminal running while this test is running. Click the button only once.</p>
+
+  <script>
+    const API = "http://localhost:3001";
+    const TOTAL_SIZE = 32 * 1024 * 1024;
+    const PART_SIZE = 16 * 1024 * 1024;
+    const fileName = "v2-two-part-32mb-test.txt";
+
+    const runButton = document.getElementById("run");
+    const statusBox = document.getElementById("status");
+    const progress = document.getElementById("progress");
+
+    function write(message) {
+      statusBox.textContent += "\n" + message;
+      console.log("[V2 TWO-PART TEST]", message);
+    }
+
+    function replaceStatus(message) {
+      statusBox.textContent = message;
+      console.log("[V2 TWO-PART TEST]", message);
+    }
+
+    async function post(path, body) {
+      const response = await fetch(API + path, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+
+      const text = await response.text();
+      let data;
+      try { data = JSON.parse(text); } catch { data = { raw: text }; }
+
+      if (!response.ok) {
+        const message = data?.error?.message || data?.message || text || ("HTTP " + response.status);
+        throw new Error(path + ": HTTP " + response.status + " — " + message);
+      }
+      return data;
+    }
+
+    function createTestBlob(size) {
+      const chunk = new Uint8Array(1024 * 1024);
+      chunk.fill(65);
+      const chunks = [];
+      for (let remaining = size; remaining > 0; remaining -= chunk.length) {
+        chunks.push(chunk.slice(0, Math.min(remaining, chunk.length)));
+      }
+      return new Blob(chunks, { type: "text/plain" });
+    }
+
+    function putPart(url, blob, partNumber, startPercent, endPercent) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", url, true);
+        // Diagnostic page only: a slow connection may take up to ten minutes.
+        xhr.timeout = 600000;
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const partPercent = event.loaded / event.total;
+            progress.value = Math.round(startPercent + partPercent * (endPercent - startPercent));
+          }
+        };
+        xhr.onload = () => {
+          const etag = xhr.getResponseHeader("ETag");
+          if (xhr.status >= 200 && xhr.status < 300 && etag) {
+            resolve(etag);
+            return;
+          }
+          reject(new Error("Part " + partNumber + " returned HTTP " + xhr.status + "; ETag present: " + Boolean(etag)));
+        };
+        xhr.onerror = () => reject(new Error("Part " + partNumber + " network error; status " + xhr.status));
+        xhr.ontimeout = () => reject(new Error("Part " + partNumber + " timed out after 10 minutes"));
+        xhr.onabort = () => reject(new Error("Part " + partNumber + " was aborted"));
+        xhr.send(blob);
+      });
+    }
+
+    runButton.addEventListener("click", async () => {
+      runButton.disabled = true;
+      progress.value = 0;
+      replaceStatus("1/7 — Opening a two-part multipart session...");
+      let session;
+
+      try {
+        session = await post("/api/v2/upload/multipart/start", {
+          originalName: fileName,
+          mimeType: "text/plain",
+          sizeBytes: TOTAL_SIZE,
+          isEncrypted: false
+        });
+        const start = session.data;
+        write("2/7 — Session created.");
+
+        const partOneResponse = await post("/api/v2/upload/multipart/part", {
+          token: start.token,
+          uploadId: start.uploadId,
+          partNumber: 1
+        });
+        write("3/7 — Part 1 URL created.");
+
+        const partTwoResponse = await post("/api/v2/upload/multipart/part", {
+          token: start.token,
+          uploadId: start.uploadId,
+          partNumber: 2
+        });
+        write("4/7 — Part 2 URL created.");
+
+        const testBlob = createTestBlob(TOTAL_SIZE);
+        const partOne = testBlob.slice(0, PART_SIZE);
+        const partTwo = testBlob.slice(PART_SIZE, TOTAL_SIZE);
+
+        write("5/7 — Uploading part 1 to S3...");
+        const etagOne = await putPart(partOneResponse.data.url, partOne, 1, 0, 45);
+        write("Part 1 uploaded; ETag received.");
+
+        write("6/7 — Uploading part 2 to S3...");
+        const etagTwo = await putPart(partTwoResponse.data.url, partTwo, 2, 45, 90);
+        write("Part 2 uploaded; ETag received.");
+
+        write("7/7 — Asking S3 to complete both parts...");
+        const completed = await post("/api/v2/upload/multipart/complete", {
+          token: start.token,
+          uploadId: start.uploadId,
+          parts: [
+            { PartNumber: 1, ETag: etagOne },
+            { PartNumber: 2, ETag: etagTwo }
+          ]
+        });
+
+        progress.value = 100;
+        write("SUCCESS — Two-part multipart upload completed.");
+        write("S3 joined 2 parts and the database record should now be READY.");
+        console.log("Completion response:", completed);
+      } catch (error) {
+        replaceStatus("TEST FAILED\n\n" + (error?.message || String(error)));
+        if (session?.data?.token && session?.data?.uploadId) {
+          try {
+            await post("/api/v2/upload/multipart/abort", {
+              token: session.data.token,
+              uploadId: session.data.uploadId
+            });
+            write("Temporary session aborted.");
+          } catch (abortError) {
+            write("Cleanup also failed: " + (abortError?.message || String(abortError)));
+          }
+        }
+        runButton.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+name: Daily S3 & DB Cleanup
+
+on:
+  schedule:
+    - cron: '30 19 * * *' # 7:30 PM UTC = 1:00 AM IST
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./backend
+
+      - name: Run Cleanup Script
+        run: npx ts-node src/jobs/cleanupExpiredFiles.ts
+        working-directory: ./backend
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
+          AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+          AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}

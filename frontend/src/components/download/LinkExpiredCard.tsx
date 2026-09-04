@@ -7,17 +7,16 @@ export function LinkExpiredCard() {
   return (
     <Card withBorder shadow="sm" radius="lg" p="xl">
       <Stack align="center" gap="md">
-        {/* If you skip the download for now, change this src to /illustrations/connection-lost.svg */}
         <Illustration src="/illustrations/link-expired.svg" alt="Link no longer available" maxWidth={260} />
         <Title order={2}>This link is no longer available</Title>
-        <Text c="dimmed" fz="sm" ta="center" maw={420}>
-          VaultHub links delete themselves after 1 day or 10 downloads — this one has already
-          done its job. If you were expecting a file, ask the sender for a fresh link.
-        </Text>
+       <Text c="dimmed" fz="sm" ta="center" maw={420}>
+  Sendly links delete themselves after their configured time or download limit this one has already
+  done its job, If you were expecting a file, ask the sender for a fresh link.
+</Text>
         <Button component={Link} to="/" leftSection={<Upload size={16} />}>Send a file instead</Button>
       </Stack>
     </Card>
   );
 }
 
-export default LinkExpiredCard;
+export default LinkExpiredCard; 

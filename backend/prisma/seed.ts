@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import prisma from "../src/lib/prisma";
 import { createHash } from "crypto";
 
