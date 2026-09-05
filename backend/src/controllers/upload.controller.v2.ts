@@ -332,6 +332,7 @@
 
 
 import type { Request, Response } from "express";
+import { recordSuccessfulUpload } from "../middleware/uploadQuota";
 import crypto from "node:crypto";
 import prisma from "../lib/prisma";
 import {
@@ -629,6 +630,9 @@ export async function completeMultipartV2(req: Request, res: Response) {
       where: { id: file.id },
       data: { status: "READY" },
     });
+
+        // NEW — only count quota here, once S3 + DB both confirm success
+    recordSuccessfulUpload((req as any).wristband, file.sizeBytes);
 
     multipartLog("database status changed to READY; completion succeeded", { partCount: normalizedParts.length, elapsedMs: Date.now() - requestStartedAt });
     return res.json({ success: true, message: "Upload complete and file is ready" });
