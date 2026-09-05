@@ -10,9 +10,13 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  esbuild: {
-    // @ts-expect-error - Vite's older type definitions sometimes miss the 'drop' property, 
-    // but esbuild fully supports it and it works perfectly to strip logs in production.
-    drop: ['console', 'debugger'],
+  build: {
+    minify: "terser",
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+    },
   },
 });

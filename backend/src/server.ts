@@ -4,15 +4,15 @@ dotenv.config();
 
 import app from "./app";
 
-import cron from "node-cron";
-import { runCleanupJob } from "./jobs/cleanupExpiredFiles";
+// import cron from "node-cron";
+// import { runCleanupJob } from "./jobs/cleanupExpiredFiles";
 
-// 🧪 TESTING MODE: Runs every 1 minute
-// 🚨 PRODUCTION MODE: Change to "30 19 * * *" (1:00 AM IST) before going live!
-cron.schedule("* * * * *", async () => {
-  console.log("[CRON] ⏰ Triggering test cleanup...");
-  await runCleanupJob();
-});
+// // 🧪 TESTING MODE: Runs every 1 minute
+// // 🚨 PRODUCTION MODE: Change to "30 19 * * *" (1:00 AM IST) before going live!
+// cron.schedule("* * * * *", async () => {
+//   console.log("[CRON] ⏰ Triggering test cleanup...");
+//   await runCleanupJob();
+// });
 
 //server.ts =the power button nothing else lives here 
 //start server 
