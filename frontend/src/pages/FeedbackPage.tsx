@@ -114,7 +114,7 @@ ${message || "(No message provided)"}`;
     const createPayload = (accessKey: string) => ({
       access_key: accessKey,
       subject: `Feedback: ${stars}/5 stars`,
-      from_name: "Sendly App",
+      from_name: "Sendly ",
       message: formattedMessage,
       "Rating": `${stars}/5`,
       "Page": window.location.pathname,
