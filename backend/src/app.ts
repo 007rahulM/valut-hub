@@ -60,7 +60,8 @@ const allowOrigins=[
     "http://localhost:4173",   //our local vite build running here 
     "http://localhost:3000",  // just in case we use port 3000
     "https://valut-hub.vercel.app",  //our live vercel frontend
-    //if we buy the custome doaim later we will dd it here...
+    "https://sendly.page",  //our new domain 
+    "https://www.sendly.page"   //domain with www
 
 ];
 
