@@ -1022,15 +1022,15 @@
 //   return (
 //     <>
 //       <style>{`
-//         @keyframes sendlyDot { 0%,20% {opacity:0;} 40% {opacity:1;} 100% {opacity:0;} }
-//         .sendly-dot { display:inline-block; animation: sendlyDot 1.2s infinite; }
-//         .sendly-dot:nth-of-type(2) { animation-delay: .2s; }
-//         .sendly-dot:nth-of-type(3) { animation-delay: .4s; }
+//         @keyframes VaultHubDot { 0%,20% {opacity:0;} 40% {opacity:1;} 100% {opacity:0;} }
+//         .VaultHub-dot { display:inline-block; animation: VaultHubDot 1.2s infinite; }
+//         .VaultHub-dot:nth-of-type(2) { animation-delay: .2s; }
+//         .VaultHub-dot:nth-of-type(3) { animation-delay: .4s; }
 //       `}</style>
 //       <Text component="span" fw={700} c="dimmed" aria-hidden>
-//         <span className="sendly-dot">.</span>
-//         <span className="sendly-dot">.</span>
-//         <span className="sendly-dot">.</span>
+//         <span className="VaultHub-dot">.</span>
+//         <span className="VaultHub-dot">.</span>
+//         <span className="VaultHub-dot">.</span>
 //       </Text>
 //     </>
 //   );
@@ -1202,15 +1202,15 @@ function WorkingDots() {
   return (
     <>
       <style>{`
-        @keyframes sendlyDot { 0%,20% {opacity:0;} 40% {opacity:1;} 100% {opacity:0;} }
-        .sendly-dot { display:inline-block; animation: sendlyDot 1.2s infinite; margin-left: 1px; }
-        .sendly-dot:nth-of-type(2) { animation-delay: .2s; }
-        .sendly-dot:nth-of-type(3) { animation-delay: .4s; }
+        @keyframes VaultHubDot { 0%,20% {opacity:0;} 40% {opacity:1;} 100% {opacity:0;} }
+        .VaultHub-dot { display:inline-block; animation: VaultHubDot 1.2s infinite; margin-left: 1px; }
+        .VaultHub-dot:nth-of-type(2) { animation-delay: .2s; }
+        .VaultHub-dot:nth-of-type(3) { animation-delay: .4s; }
       `}</style>
       <span aria-hidden>
-        <span className="sendly-dot">.</span>
-        <span className="sendly-dot">.</span>
-        <span className="sendly-dot">.</span>
+        <span className="VaultHub-dot">.</span>
+        <span className="VaultHub-dot">.</span>
+        <span className="VaultHub-dot">.</span>
       </span>
     </>
   );

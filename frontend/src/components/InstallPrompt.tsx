@@ -55,7 +55,7 @@
 //     }
 
 //     const outcome = await consumeInstallPrompt();
-//     if (outcome === "accepted") toast.success("Sendly installed — check your home screen!");
+//     if (outcome === "accepted") toast.success("VaultHub installed — check your home screen!");
 //     setVisible(false);
 //   };
 
@@ -65,7 +65,7 @@
 //       shadow="sm"
 //       radius="md"
 //       p={8}
-//       className="sendly-install-prompt"
+//       className="VaultHub-install-prompt"
 //       style={{
 //         position: "fixed",
 //         right: 16,
@@ -79,7 +79,7 @@
 //       <Group gap={8} wrap="nowrap" align="center">
 //         <BoxFallback>
 //           <Text fz="xs" fw={700} lh={1.2}>
-//             {ios ? "Add Sendly to Home Screen" : "Install Sendly"}
+//             {ios ? "Add VaultHub to Home Screen" : "Install VaultHub"}
 //           </Text>
 //           <Text fz={10} c="dimmed" lh={1.25} mt={2}>
 //             {ios ? (
@@ -143,7 +143,7 @@ import {
 
 const MOBILE_HIDE_MS = 15000;
 // Key to remember "already shown this session"
-const SESSION_SHOWN_KEY = "sendly_pwa_prompt_shown_this_session";
+const SESSION_SHOWN_KEY = "VaultHub_pwa_prompt_shown_this_session";
 
 export function InstallPrompt() {
   const [visible, setVisible] = useState(() => {
@@ -192,7 +192,7 @@ export function InstallPrompt() {
       return;
     }
     const outcome = await consumeInstallPrompt();
-    if (outcome === "accepted") toast.success("Sendly installed — check your home screen!");
+    if (outcome === "accepted") toast.success("VaultHub installed — check your home screen!");
     setVisible(false);
   };
 
@@ -202,7 +202,7 @@ export function InstallPrompt() {
       shadow="sm"
       radius="md"
       p={8}
-      className="sendly-install-prompt"
+      className="VaultHub-install-prompt"
       style={{
         position: "fixed",
         right: 16,
@@ -216,7 +216,7 @@ export function InstallPrompt() {
       <Group gap={8} wrap="nowrap" align="center">
         <BoxFallback>
           <Text fz="xs" fw={700} lh={1.2}>
-            {ios ? "Add Sendly to Home Screen" : "Install Sendly"}
+            {ios ? "Add VaultHub to Home Screen" : "Install VaultHub"}
           </Text>
           <Text fz={10} c="dimmed" lh={1.25} mt={2}>
             {ios ? (

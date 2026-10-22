@@ -84,7 +84,7 @@ const links = [
   { to: "/", label: "Upload", tip: "Send a file" },
   { to: "/how", label: "How it works", tip: "Four simple steps" },
   { to: "/faq", label: "FAQ", tip: "Quick answers" },
-  { to: "/about", label: "About", tip: "Why Sendly" },
+  { to: "/about", label: "About", tip: "Why VaultHub" },
   { to: "/terms", label: "Terms", tip: "The rules" },
   { to: "/privacy", label: "Privacy", tip: "What we store" },
 ];

@@ -212,8 +212,8 @@
 // const MultipartV2UploadTestPage = lazy(
 //   () => import("./pages/MultipartV2UploadTestPage"),
 // );
-// const SendlyLearningLabV2 = lazy(
-//   () => import("./pages/SendlyLearningLabV2"),
+// const VaultHubLearningLabV2 = lazy(
+//   () => import("./pages/VaultHubLearningLabV2"),
 // );
 // const UploadPageV2 = lazy(() => import("./pages/UploadPage.v2"));
 // const DownloadPageV2 = lazy(() => import("./pages/DownloadPage.v2"));
@@ -262,8 +262,8 @@
 //                 element={<Layout><MultipartV2UploadTestPage /></Layout>}
 //               />
 //               <Route
-//                 path="/dev/sendly-learning-v2"
-//                 element={<Layout><SendlyLearningLabV2 /></Layout>}
+//                 path="/dev/VaultHub-learning-v2"
+//                 element={<Layout><VaultHubLearningLabV2 /></Layout>}
 //               />
 //               <Route
 //                 path="/"
@@ -312,8 +312,8 @@ import DeepDivePage from "./pages/DeepDivePage";
 // const MultipartV2UploadTestPage = lazy(
 //   () => import("./pages/MultipartV2UploadTestPage"),
 // );
-// const SendlyLearningLabV2 = lazy(
-//   () => import("./pages/SendlyLearningLabV2"),
+// const VaultHubLearningLabV2 = lazy(
+//   () => import("./pages/VaultHubLearningLabV2"),
 // );
 const UploadPageV2 = lazy(() => import("./pages/UploadPage.v2"));
 // const DownloadPageV2 = lazy(() => import("./pages/DownloadPage.v2"));
@@ -365,8 +365,8 @@ function App() {
                 element={<Layout><MultipartV2UploadTestPage /></Layout>}
               />
               <Route
-                path="/dev/sendly-learning-v2"
-                element={<Layout><SendlyLearningLabV2 /></Layout>}
+                path="/dev/VaultHub-learning-v2"
+                element={<Layout><VaultHubLearningLabV2 /></Layout>}
               />
               <Route
                 path="/"

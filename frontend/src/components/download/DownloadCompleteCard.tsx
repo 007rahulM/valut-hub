@@ -23,7 +23,7 @@
 //         </Text>
 
 //         <Text fz="sm" c="dimmed" ta="center" maw={420}>
-//           Got something to send back? Sendly is free, private, and needs no account.
+//           Got something to send back? VaultHub is free, private, and needs no account.
 //         </Text>
 
 //         <Button component={Link} to="/" leftSection={<Upload size={16} />}>
@@ -65,7 +65,7 @@ export function DownloadCompleteCard() {
         </Text>
 
         <Text fz="sm" c="dimmed" ta="center" maw={420}>
-          Got something to send back? Sendly is free, private, and needs no account.
+          Got something to send back? VaultHub is free, private, and needs no account.
         </Text>
 
         <Button component={Link} to="/" leftSection={<Upload size={16} />}>

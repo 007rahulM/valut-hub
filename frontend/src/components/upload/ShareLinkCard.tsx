@@ -66,7 +66,7 @@ export function ShareLinkCard(props: ShareLinkCardProps) {
   const downloadQRCode = () => {
     if (!cardUrl) return;
     const link = document.createElement("a");
-    link.download = `sendly-qr.png`;
+    link.download = `VaultHub-qr.png`;
     link.href = cardUrl;
     link.click();
     toast.success("Downloaded!");
@@ -77,8 +77,8 @@ export function ShareLinkCard(props: ShareLinkCardProps) {
     try {
       const response = await fetch(cardUrl);
       const blob = await response.blob();
-      const file = new File([blob], "sendly-qr.png", { type: "image/png" });
-      await navigator.share({ title: "Sendly", text: "You received a file — scan to review or download.", files: [file] });
+      const file = new File([blob], "VaultHub-qr.png", { type: "image/png" });
+      await navigator.share({ title: "VaultHub", text: "You received a file — scan to review or download.", files: [file] });
     } catch {
       // silently fail if user cancels share
     }

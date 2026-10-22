@@ -9,11 +9,11 @@ interface CookieBannerProps {
 export function CookieBanner({ hidden = false }: CookieBannerProps) {
   const [visible, setVisible] = useState(() => {
     if (typeof window === "undefined") return false;
-    return !localStorage.getItem("sendly_cookie_consent");
+    return !localStorage.getItem("VaultHub_cookie_consent");
   });
 
   const handleAccept = () => {
-    localStorage.setItem("sendly_cookie_consent", "true");
+    localStorage.setItem("VaultHub_cookie_consent", "true");
     setVisible(false);
   };
 
@@ -41,7 +41,7 @@ export function CookieBanner({ hidden = false }: CookieBannerProps) {
         <div style={{ flex: 1 }}>
           <Text fz="sm" fw={700} mb={4}>We use functional cookies</Text>
           <Text fz="xs" c="dimmed" mb="md" lh={1.5}>
-            Sendly uses a small technical cookie to keep the service safe, remember your display preference, and recover interrupted uploads. We do not use tracking or advertising cookies.
+            VaultHub uses a small technical cookie to keep the service safe, remember your display preference, and recover interrupted uploads. We do not use tracking or advertising cookies.
           </Text>
           <Button size="xs" fullWidth onClick={handleAccept}>I Agree</Button>
         </div>

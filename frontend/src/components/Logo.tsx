@@ -66,8 +66,8 @@
 import { Box, useMantineColorScheme } from "@mantine/core";
 
 // These are the exact filenames already present in public/illustrations.
-const LIGHT_LOGO_URL = "/illustrations/main_logo_lighmode_removed_backround2.png";
-const DARK_LOGO_URL = "/illustrations/main_logo_darkmode_removed_background3.png";
+const LIGHT_LOGO_URL = "/illustrations/logo.png";
+const DARK_LOGO_URL = "/illustrations/logo.png";
 
 export function Logo() {
   const { colorScheme } = useMantineColorScheme();
@@ -77,8 +77,8 @@ export function Logo() {
     <Box
       component="img"
       src={src}
-      alt="Sendly"
-      aria-label="Sendly"
+      alt="VaultHub"
+      aria-label="VaultHub"
       loading="eager"
       decoding="async"
       style={{

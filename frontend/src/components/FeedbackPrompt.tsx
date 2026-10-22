@@ -45,15 +45,15 @@
 //         </table>
         
 //         <p style="color: #888888; font-size: 13px; margin-top: 30px; border-top: 1px solid #e0e0e0; padding-top: 15px;">
-//           This is an automated notification from the Sendly App.
+//           This is an automated notification from the VaultHub App.
 //         </p>
 //       </div>
 //     `.trim();
 
 //     const createPayload = (accessKey: string) => ({
 //       access_key: accessKey,
-//       subject: `New Feedback: ${value}/5 Stars - Sendly App`,
-//       from_name: "Sendly App",
+//       subject: `New Feedback: ${value}/5 Stars - VaultHub App`,
+//       from_name: "VaultHub App",
 //       message: formattedMessage,
 //     });
 
@@ -150,7 +150,7 @@ export function FeedbackPrompt() {
 
     // ✅ CLEAN PLAIN TEXT FORMAT (not HTML)
     const formattedMessage = `
-QUICK FEEDBACK - SENDLY
+QUICK FEEDBACK - VaultHub
 
 Rating: ${value} / 5 Stars
 Page: ${getPageName()}
@@ -163,7 +163,7 @@ This is automated feedback from the quick rating widget.
     const createPayload = (accessKey: string) => ({
       access_key: accessKey,
       subject: `⭐ ${value}/5 Stars - ${getPageName()}`,
-      from_name: "Sendly ",
+      from_name: "VaultHub ",
       message: formattedMessage,
       "Rating": `${value}/5`,
       "Page": getPageName(),

@@ -15,7 +15,7 @@
 //         {/* Row 1: brand + copyright */}
 //         <Group justify="space-between" align="center" wrap="wrap" gap={8}>
 //           <Logo />
-//           <Text fz={11} c="dimmed">© {new Date().getFullYear()} Sendly all rights reserved</Text>
+//           <Text fz={11} c="dimmed">© {new Date().getFullYear()} VaultHub all rights reserved</Text>
 //         </Group>
 
 //         {/* Row 2: the one-line promise */}
@@ -74,12 +74,12 @@ import { Logo } from "./Logo";
 
 export function Footer() {
   return (
-    <footer className="sendly-footer" style={{ borderTop: "1px solid var(--mantine-color-default-border)", background: "var(--mantine-color-body)" }}>
+    <footer className="VaultHub-footer" style={{ borderTop: "1px solid var(--mantine-color-default-border)", background: "var(--mantine-color-body)" }}>
       <Stack gap="md" px="md" py="md" style={{ maxWidth: 1080, margin: "0 auto" }}>
         {/* Row 1: brand + copyright */}
         <Group justify="space-between" align="center" wrap="wrap" gap={8}>
           <Logo />
-          <Text fz={11} c="dimmed">© {new Date().getFullYear()} Sendly. All rights reserved.</Text>
+          <Text fz={11} c="dimmed">© {new Date().getFullYear()} VaultHub. All rights reserved.</Text>
         </Group>
 
         {/* Row 2: the one-line promise */}
